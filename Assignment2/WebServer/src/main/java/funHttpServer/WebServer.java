@@ -201,18 +201,57 @@ class WebServer {
           // extract path parameters
           query_pairs = splitQuery(request.replace("multiply?", ""));
 
-          // extract required fields from parameters
-          Integer num1 = Integer.parseInt(query_pairs.get("num1"));
-          Integer num2 = Integer.parseInt(query_pairs.get("num2"));
+          String statusLine;
+          String body;
 
-          // do math
-          Integer result = num1 * num2;
+          // check if paramters exist
+          if (!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")) 
+          {
+              statusLine = "HTTP/1.1 400 Bad Request\n";
+              body = "Missing parameters! Please include num1 and num2 in the query.";
+          } 
+          else if (query_pairs.get("num1").equals("") || query_pairs.get("num2").equals("")) 
+          {
+              statusLine = "HTTP/1.1 400 Bad Request\n";
+              body = "Invalid parameters! num1 and num2 cannot be empty.";
+          }
+          else 
+          {
+              try
+              {
+                  // extract fields from query
+                  Integer num1 = Integer.parseInt(query_pairs.get("num1"));
+                  Integer num2 = Integer.parseInt(query_pairs.get("num2"));
+                  Integer result = num1 * num2;
+                  // 200 OK and show result
+                  statusLine = "HTTP/1.1 200 OK\n";
+                  body = "Result is: " + result;
+              }
+              catch (NumberFormatException e)
+              {
+                  // not a valid integer
+                  statusLine = "HTTP/1.1 400 Bad Request\n";
+                  body = "Invalid parameters! Please make sure num1 and num2 are valid integers.";
+              }
+          }
+          // build response
+           builder.append(statusLine);
+           builder.append("Content-Type: text/html; charset=utf-8\n");
+           builder.append("\n");
+           builder.append(body);
 
-          // Generate response
-          builder.append("HTTP/1.1 200 OK\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("Result is: " + result);
+          // // extract required fields from parameters
+          // Integer num1 = Integer.parseInt(query_pairs.get("num1"));
+          // Integer num2 = Integer.parseInt(query_pairs.get("num2"));
+
+          // // do math
+          // Integer result = num1 * num2;
+
+          // // Generate response
+          // builder.append("HTTP/1.1 200 OK\n");
+          // builder.append("Content-Type: text/html; charset=utf-8\n");
+          // builder.append("\n");
+          // builder.append("Result is: " + result);
 
           // TODO: Include error handling here with a correct error code and
           // a response that makes sense
