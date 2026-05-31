@@ -488,8 +488,81 @@ class WebServer {
                   builder.append("</body></html>");
               }      
           }
+        }
+        
+        // request to compare 2 numbers, giving max and difference
+        else if (request.contains("compare?"))
+        {
+            Map<String, String> query_pairs = new LinkedHashMap<String, String>();
+            // extract path parameters
+            query_pairs = splitQuery(request.replace("compare?", ""));
 
-        } else {
+
+            // check if parameters exist
+            if (!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")) 
+            {
+                builder.append("HTTP/1.1 400 Bad Request\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                builder.append("<html><body>");
+                builder.append("<h1>Compare Request Error</h1>");
+                builder.append("<p>Missing parameters! Include num1 and num2 in the query.</p>");
+                builder.append("<p>Use format: /compare?num1=5&num2=10</p>");
+                builder.append("</body></html>");
+            }
+            // check if values empty
+            else if (query_pairs.get("num1").equals("") || query_pairs.get("num2").equals(""))
+            {
+                builder.append("HTTP/1.1 400 Bad Request\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                builder.append("<html><body>");
+                builder.append("<h1>Compare Request Error</h1>");
+                builder.append("<p>Empty parameter values! Make sure num1 and num2 have values.</p>");
+                builder.append("<p>Use format: /compare?num1=5&num2=10</p>");
+                builder.append("</body></html>");
+            }
+            else
+            {
+                try 
+                {
+                    // extract required fields from parameters
+                    Integer num1 = Integer.parseInt(query_pairs.get("num1"));
+                    Integer num2 = Integer.parseInt(query_pairs.get("num2"));
+                    builder.append("HTTP/1.1 200 OK\n");
+                    builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                    builder.append("<html><body>");
+                    builder.append("<h1>Compare Result</h1>");
+
+                    // check if num1 or num2 bigger
+                    if (num1 > num2)
+                    {
+                        builder.append("<p>").append(num1).append(" is greater than ").append(num2).append(".</p>");
+                        builder.append("<p>Difference is ").append(num1 - num2).append(".</p>");
+                    }
+                    else if (num2 > num1)
+                    {
+                        builder.append("<p>").append(num2).append(" is greater than ").append(num1).append(".</p>");
+                        builder.append("<p>Difference is ").append(num2 - num1).append(".</p>");
+                    }
+                    else
+                    {
+                        builder.append("<p>").append(num1).append(" and ").append(num2).append(" are equal. </p>");
+                        builder.append("<p>Difference is 0.</p>");
+                    }
+                } 
+                catch (NumberFormatException e) 
+                {
+                    builder.append("HTTP/1.1 400 Bad Request\n");
+                    builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                    builder.append("<html><body>");
+                    builder.append("<h1>Compare Request Error</h1>");
+                    builder.append("<p>Invalid parameters! Please make sure num1 and num2 are integers.</p>");
+                    builder.append("</body></html>");
+                }
+            }
+        }
+        
+        else 
+        {
           // if the request is not recognized at all
 
           builder.append("HTTP/1.1 400 Bad Request\n");
