@@ -560,7 +560,95 @@ class WebServer {
                 }
             }
         }
-        
+        // request to repeat a text a certain number of times
+        else if (request.contains("repeat?"))
+        {
+            Map<String, String> query_pairs = new LinkedHashMap<String, String>();
+            // extract path parameters
+            query_pairs = splitQuery(request.replace("repeat?", ""));
+
+            // check if parameters exist
+            if (!query_pairs.containsKey("text") || !query_pairs.containsKey("times")) 
+            {
+                builder.append("HTTP/1.1 400 Bad Request\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                builder.append("<html><body>");
+                builder.append("<h1>Repeat Request Error</h1>");
+                builder.append("<p>Missing parameters! Please include text and times in the query.</p>");
+                builder.append("<p>Use format: /repeat?text=hello&times=3</p>");
+                builder.append("</body></html>");
+            }
+            // check if text or times value empty
+            else if (query_pairs.get("text").equals("") || query_pairs.get("times").equals(""))
+            {
+                builder.append("HTTP/1.1 400 Bad Request\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                builder.append("<html><body>");
+                builder.append("<h1>Repeat Request Error</h1>");
+                builder.append("<p>Empty parameter values! Make sure text and times have values.</p>");
+                builder.append("<p>Use format: /repeat?text=hello&times=3</p>");
+                builder.append("</body></html>");
+            }
+            else
+            {
+                try 
+                {
+                    // extract required fields from parameters
+                    String text = query_pairs.get("text");
+                    Integer times = Integer.parseInt(query_pairs.get("times"));
+                    
+                    // check if times is a positive integer
+                    if (times < 1) 
+                    {
+                        builder.append("HTTP/1.1 400 Bad Request\n");
+                        builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                        builder.append("<html><body>");
+                        builder.append("<h1>Repeat Request Error</h1>");
+                        builder.append("<p>Invalid parameters! Make sure times is a positive integer greater than 0.</p>");
+                        builder.append("</body></html>");
+                    }
+                    // limit times to prevent over use
+                    else if (times > 20)
+                    {
+                        builder.append("HTTP/1.1 400 Bad Request\n");
+                        builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                        builder.append("<html><body>");
+                        builder.append("<h1>Repeat Request Error</h1>");
+                        builder.append("<p>Parameter value too large! Please make sure times is 20 or less.</p>");
+                        builder.append("</body></html>");
+                    }
+                    else
+                    {
+                        StringBuilder result = new StringBuilder();
+                        for (int i = 0; i < times; i++) 
+                        {
+                            result.append(text);
+                            if (i < (times - 1)) 
+                            {
+                                result.append(" ");
+                            }
+                        }
+                        builder.append("HTTP/1.1 200 OK\n");
+                        builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                        builder.append("<html><body>");
+                        builder.append("<h1>Repeat Request Result</h1>");
+                        builder.append("<p>Result is: ").append(result.toString()).append("</p>");
+                        builder.append("</body></html>");
+                    }
+                } 
+                catch (NumberFormatException e) 
+                {
+                    builder.append("HTTP/1.1 400 Bad Request\n");
+                    builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                    builder.append("<html><body>");
+                    builder.append("<h1>Repeat Request Error</h1>");
+                    builder.append("<p>Invalid parameters! Make sure times is an integer.</p>");
+                    builder.append("<p>Use format: /repeat?text=hello&times=3</p>");
+                    builder.append("</body></html>");
+                }
+            }
+        }
+
         else 
         {
           // if the request is not recognized at all
