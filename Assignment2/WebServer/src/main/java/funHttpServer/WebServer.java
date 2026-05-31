@@ -194,67 +194,127 @@ class WebServer {
             builder.append("File not found: " + file);
           }
         } else if (request.contains("multiply?")) {
-          // This multiplies two numbers, there is NO error handling, so when
-          // wrong data is given this just crashes
+          // This multiplies two numbers, with error handling
+          // if num1 or num2 not provided or not valid, using default value 1
 
           Map<String, String> query_pairs = new LinkedHashMap<String, String>();
-          // extract path parameters
-          query_pairs = splitQuery(request.replace("multiply?", ""));
+          // split parameters with &
+          String query = request.replace("multiply?","");
+          String[] pairs = query.split("&");
+          // flags if num1 and num2 default value
+          boolean num1Default = false;
+          boolean num2Default = false;
+          String message = "";
 
-          String statusLine;
-          String body;
-
-          // check if paramters exist
-          if (!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")) 
+          // put query values into map
+          for (String pair : pairs) 
           {
-              statusLine = "HTTP/1.1 400 Bad Request\n";
-              body = "Missing parameters! Please include num1 and num2 in the query.";
-          } 
-          else if (query_pairs.get("num1").equals("") || query_pairs.get("num2").equals("")) 
-          {
-              statusLine = "HTTP/1.1 400 Bad Request\n";
-              body = "Invalid parameters! num1 and num2 cannot be empty.";
-          }
-          else 
-          {
-              try
+              if (pair.contains("="))
               {
-                  // extract fields from query
-                  Integer num1 = Integer.parseInt(query_pairs.get("num1"));
-                  Integer num2 = Integer.parseInt(query_pairs.get("num2"));
-                  Integer result = num1 * num2;
-                  // 200 OK and show result
-                  statusLine = "HTTP/1.1 200 OK\n";
-                  body = "Result is: " + result;
+                  // split key and value with =
+                  String[] keyValue = pair.split("=", 2);
+                  String key = keyValue[0];
+                  // set value empty if no value provided
+                  String value = keyValue.length > 1 ? keyValue[1] : "";
+                  // 
+                  if (key.equals("num1") || key.equals("num2"))
+                  {
+                      query_pairs.put(key, value);
+                  }
               }
-              catch (NumberFormatException e)
+              else
               {
-                  // not a valid integer
-                  statusLine = "HTTP/1.1 400 Bad Request\n";
-                  body = "Invalid parameters! Please make sure num1 and num2 are valid integers.";
+                  // no = in num1 or num2 given
+                  if (pair.equals("num1"))
+                  {
+                      query_pairs.put("num1", "1");
+                      num1Default = true;
+                      message += "num1 was provided without an equals sign, so it was defaulted to 1.<br>";
+                  }
+                  else if (pair.equals("num2"))
+                  {
+                      query_pairs.put("num2", "1");
+                      num2Default = true;
+                      message += "num2 was provided without an equals sign, so it was defaulted to 1.<br>";
+                  }
               }
           }
-          // build response
-           builder.append(statusLine);
-           builder.append("Content-Type: text/html; charset=utf-8\n");
-           builder.append("\n");
-           builder.append(body);
 
-          // // extract required fields from parameters
-          // Integer num1 = Integer.parseInt(query_pairs.get("num1"));
-          // Integer num2 = Integer.parseInt(query_pairs.get("num2"));
+          // num1 parameter missing
+          if (!query_pairs.containsKey("num1"))
+          {
+              query_pairs.put("num1", "1");
+              num1Default = true;
+              message += "num1 parameter was missing, so it was defaulted to 1.<br>";
+          }
+          // num2 parameter missing
+          if (!query_pairs.containsKey("num2"))
+          {
+              query_pairs.put("num2", "1");
+              num2Default = true;
+              message += "num2 parameter was missing, so it was defaulted to 1.<br>";
+          }
 
-          // // do math
-          // Integer result = num1 * num2;
+          // num1 value empty
+          if (query_pairs.get("num1").equals(""))
+          {
+              query_pairs.put("num1", "1");
+              num1Default = true;
+              message += "num1 value was not provided, so it was defaulted to 1.<br>";
+          }
+          // num2 value empty
+          if (query_pairs.get("num2").equals(""))
+          {
+              query_pairs.put("num2", "1");
+              num2Default = true;
+              message += "num2 value was not provided, so it was defaulted to 1.<br>";
+          }
 
-          // // Generate response
-          // builder.append("HTTP/1.1 200 OK\n");
-          // builder.append("Content-Type: text/html; charset=utf-8\n");
-          // builder.append("\n");
-          // builder.append("Result is: " + result);
+          // default num1, num2
+          Integer num1 = 1; 
+          Integer num2 = 1;
 
-          // TODO: Include error handling here with a correct error code and
-          // a response that makes sense
+          // check if valid num1
+          try
+          {
+              num1 = Integer.parseInt(query_pairs.get("num1"));
+          }
+          catch (NumberFormatException e)
+          {
+              num1 = 1;
+              num1Default = true;
+              message += "num1 value was not a valid integer, so it was defaulted to 1.<br>";
+          }
+          // check if valid num2
+          try
+          {
+              num2 = Integer.parseInt(query_pairs.get("num2"));
+          }
+          catch (NumberFormatException e)
+          {
+              num2 = 1;
+              num2Default = true;
+              message += "num2 value was not a valid integer, so it was defaulted to 1.<br>";
+          }
+
+          
+          // build response body
+          Integer result = num1 * num2;
+          builder.append("HTTP/1.1 200 OK\n");
+          builder.append("Content-Type: text/html; charset=utf-8\n");
+          builder.append("\n");
+          builder.append("<html><body>");
+          builder.append("<h1>Multiplication result</h1>");
+
+          // bold message for parameter issues
+          if (num1Default || num2Default)
+          {
+              builder.append("<p><strong>Parameter issues:</strong></p>");
+              builder.append("<p>").append(message).append("</p>");
+          }
+
+          builder.append("<p>Result is " +num1+ " * " +num2+ " = " +result+ "</p>");
+          builder.append("</body></html>");
 
         } else if (request.contains("github?")) {
           // pulls the query from the request and runs it with GitHub's REST API
