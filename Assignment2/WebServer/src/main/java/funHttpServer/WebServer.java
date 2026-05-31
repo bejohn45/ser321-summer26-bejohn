@@ -410,7 +410,7 @@ class WebServer {
 
                               builder.append("full_name: ").append(fullName).append("<br>");
                               builder.append("id: ").append(id).append("<br>");
-                              builder.append("owner.login: ").append(login).append("<br><br>");                      
+                              builder.append("owner_login: ").append(login).append("<br><br>");                      
                             
                           }
                           builder.append("</body></html>");
