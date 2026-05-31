@@ -331,122 +331,162 @@ class WebServer {
 
           Map<String, String> query_pairs = new LinkedHashMap<String, String>();
           query_pairs = splitQuery(request.replace("github?", ""));
-          String json = fetchURL("https://api.github.com/" + query_pairs.get("query"));
-          System.out.println(json);
-
-          builder.append("HTTP/1.1 200 OK\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("Check the todos mentioned in the Java source file");
-          // TODO: Parse the JSON returned by your fetch and create an appropriate
-          // response based on what the assignment document asks for
-          //overwrite response above
-          builder.setLength(0);
-          String trimmed = (json==null) ? "" : json.trim();
-
-          // empty response handling
-          if (trimmed.isEmpty()) 
+           //check if query missing
+          if (!query_pairs.containsKey("query") || query_pairs.get("query").equals(""))
           {
-              builder.setLength(0); 
-              builder.append("HTTP/1.1 502 Bad Gateway\n");
-              builder.append("Content-Type: text/html; charset=utf-8\n\n");
-              builder.append("No data returned from GitHub API");
-          } 
-          // check if array of repos returned
-          else if (trimmed.startsWith("["))
-          {
-              // stores repos as JSON array
-              JSONArray repos;
-              try {
-                  repos = new JSONArray(trimmed);
-              } catch (JSONException e) {
-                  // invalid data returned handling
-                  repos = null;
-                  builder.setLength(0); 
-                  builder.append("HTTP/1.1 502 Bad Gateway\n");
-                  builder.append("Content-Type: text/html; charset=utf-8\n\n");
-                  builder.append("Invalid JSON returned from GitHub API");
-              }
-              
-              // check if repos is not null 
-              if (repos != null)
-              {
-                  builder.append("HTTP/1.1 200 OK\n");
-                  builder.append("Content-Type: text/html; charset=utf-8\n\n");
-                  builder.append("<html><body>");
-                  builder.append("<h3>Public Repositories</h3>");
-
-                  // iterate through repos
-                  for (int i=0; i<repos.length(); i++) 
-                  {
-
-                      JSONObject repo = repos.getJSONObject(i);
-                      String fullName = repo.optString("full_name", "(missing full_name)");
-                      long id = repo.optLong("id", -1);
-                      JSONObject owner = repo.optJSONObject("owner");
-                      String login = (owner != null) ? owner.optString("login", "(missing login)") : "(missing owner)";
-
-                      builder.append("full_name: ").append(fullName).append("<br>");
-                      builder.append("id: ").append(id).append("<br>");
-                      builder.append("owner.login: ").append(login).append("<br><br>");                      
-                    
-                  }
-                  builder.append("</body></html>");
-              }
-          }
-          // github error object
-          else if (trimmed.startsWith("{"))
-          {
-              JSONObject obj;
-              try {
-                  obj = new JSONObject(trimmed);
-              } catch (JSONException e) {
-                  // invalid data returned handling
-                  obj = null;
-                  builder.setLength(0); 
-                  builder.append("HTTP/1.1 502 Bad Gateway\n");
-                  builder.append("Content-Type: text/html; charset=utf-8\n\n");
-                  builder.append("Invalid JSON returned from GitHub API");
-              }
-              // obj not null
-              if (obj != null)
-              {
-                  String message = obj.optString("message", "Unknown Error");
-                  String lower = message.toLowerCase();
-                  // check if it's an unknown, rate limit error, authentication error
-                  int status = 400;
-                  String statusText = "Bad Request";
-                  if (lower.contains("not found"))
-                  {
-                      status = 404;
-                      statusText = "Not Found";
-                  }
-                  else if (lower.contains("rate limit"))
-                  {
-                      status = 503;
-                      statusText = "Service Unavailable";
-                  }
-                  else if (lower.contains("bad credentials") || lower.contains("requires authentication"))
-                  {
-                      status = 401;
-                      statusText = "Unauthorized";
-                  }
-                  builder.setLength(0); 
-                  builder.append("HTTP/1.1 " + status + " " + statusText + "\n");
-                  builder.append("Content-Type: text/html; charset=utf-8\n\n");
-                  builder.append("<html><body>");
-                  builder.append("GitHub API Error: ").append(message);
-                  builder.append("</body></html>");
-              }
-          }
-
-          // unexpected response
-          else
-          {
-              builder.append("HTTP/1.1 502 Bad Gateway\n");
+              builder.append("HTTP/1.1 400 Bad Request\n");
               builder.append("Content-Type: text/html; charset=utf-8\n\n");
               builder.append("<html><body>");
-              builder.append("Unexpected response from GitHub API");
+              builder.append("<h1>Github Request Error</h1>");
+              builder.append("<p>Query parameter missing or empty.</p>");
+              builder.append("<p>Use format: /github?query=users/bejohn45/repos</p>");
+              builder.append("</body></html>");
+          }
+          else
+          {
+              // call api 
+              String json = fetchURL("https://api.github.com/" + query_pairs.get("query"));
+              System.out.println(json);
+              String trimmed = (json==null) ? "" : json.trim();
+
+              // empty response handling
+              if (trimmed.isEmpty()) 
+              {
+                  builder.setLength(0); 
+                  builder.append("HTTP/1.1 502 Bad Gateway\n");
+                  builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                  builder.append("<html><body>");
+                  builder.append("<h1>Github API Error</h1>");
+                  builder.append("<p>No data returned from GitHub API.</p>");
+                  builder.append("<p>The username or API path may be invalid.</p>");
+                  builder.append("<p>Use format: /github?query=users/bejohn45/repos</p>");
+                  builder.append("</body></html>");
+              } 
+
+              // check if array of repos returned
+              else if (trimmed.startsWith("["))
+              {
+                  // stores repos as JSON array
+                  JSONArray repos;
+                  try 
+                  {
+                      repos = new JSONArray(trimmed);
+                  } 
+                  catch (JSONException e) {
+                      // invalid data returned handling
+                      repos = null;
+                      builder.setLength(0); 
+                      builder.append("HTTP/1.1 502 Bad Gateway\n");
+                      builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                      builder.append("<html><body>");
+                      builder.append("<h1>Github API Error</h1>");
+                      builder.append("<p>Invalid JSON returned from GitHub API.</p>");
+                      builder.append("</body></html>");
+                  }
+                  
+                  // check if repos is not null 
+                  if (repos != null)
+                  {
+                      builder.append("HTTP/1.1 200 OK\n");
+                      builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                      builder.append("<html><body>");
+                      builder.append("<h3>Public Repositories</h3>");
+
+                      // check if no repos
+                      if (repos.length() == 0)
+                      {
+                          builder.append("<p>No public repositories found for this user.</p>");
+                      }
+                      else
+                      {
+                          // iterate through repos
+                          for (int i=0; i<repos.length(); i++) 
+                          {
+                              JSONObject repo = repos.getJSONObject(i);
+                              String fullName = repo.optString("full_name", "(missing full_name)");
+                              long id = repo.optLong("id", -1);
+                              JSONObject owner = repo.optJSONObject("owner");
+                              String login = (owner != null) ? owner.optString("login", "(missing login)") : "(missing owner)";
+
+                              builder.append("full_name: ").append(fullName).append("<br>");
+                              builder.append("id: ").append(id).append("<br>");
+                              builder.append("owner.login: ").append(login).append("<br><br>");                      
+                            
+                          }
+                          builder.append("</body></html>");
+                      }
+
+                  }
+              }
+              // github error object
+              else if (trimmed.startsWith("{"))
+              {
+                  JSONObject obj;
+                  try 
+                  {
+                      obj = new JSONObject(trimmed);
+                  } 
+                  catch (JSONException e) 
+                  {
+                      // invalid data returned handling
+                      obj = null;
+                      builder.setLength(0); 
+                      builder.append("HTTP/1.1 502 Bad Gateway\n");
+                      builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                      builder.append("<html><body>");
+                      builder.append("<h1>Github API Error</h1>");
+                      builder.append("<p>Invalid JSON returned from GitHub API.</p>");
+                      builder.append("</body></html>");
+                  }
+                  // obj not null
+                  if (obj != null)
+                  {
+                      String message = obj.optString("message", "");
+                      // check if no message returned
+                      if (message.equals(""))
+                      {
+                          message = "Github returned an error response without a message.";
+                      }
+                      String lower = message.toLowerCase();
+                      // check if it's an unknown, rate limit error, authentication error
+                      int status = 400;
+                      String statusText = "Bad Request";
+                      if (lower.contains("not found"))
+                      {
+                          status = 404;
+                          statusText = "Not Found";
+                      }
+                      else if (lower.contains("rate limit"))
+                      {
+                          status = 503;
+                          statusText = "Service Unavailable";
+                      }
+                      else if (lower.contains("bad credentials") || lower.contains("requires authentication"))
+                      {
+                          status = 401;
+                          statusText = "Unauthorized";
+                      }
+      
+                      builder.append("HTTP/1.1 " + status + " " + statusText + "\n");
+                      builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                      builder.append("<html><body>");
+                      builder.append("<h1>Github API Error</h1>");
+                      builder.append("<p>").append(message).append("</p>");
+                      builder.append("<p>Use format: /github?query=users/bejohn45/repos</p>");
+                      builder.append("</body></html>");
+                  }
+              }
+              // unexpected response
+              else
+              {
+                  builder.append("HTTP/1.1 502 Bad Gateway\n");
+                  builder.append("Content-Type: text/html; charset=utf-8\n\n");
+                  builder.append("<html><body>");
+                  builder.append("<h1>GitHub API Error</h1>");
+                  builder.append("<p>Unexpected response from GitHub API.</p>");
+                  builder.append("<p>Use format: /github?query=users/bejohn45/repos</p>");
+                  builder.append("</body></html>");
+              }      
           }
 
         } else {
