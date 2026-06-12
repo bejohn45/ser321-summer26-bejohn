@@ -137,15 +137,15 @@ class SockClient {
               String operation = res.getString("operation");
               if (operation.equals("add"))
               {
-                  System.out.println("Sum: " + res.getInt("result"));
+                  System.out.println("Sum: " + res.getInt("sum"));
               }
               else if (operation.equals("multiply"))
               {
-                  System.out.println("Product: " + res.getInt("result"));
+                  System.out.println("Product: " + res.getInt("product"));
               }
               else if (operation.equals("average"))
               {
-                  System.out.println("Average: " + res.getInt("result"));
+                  System.out.println("Average: " + res.getDouble("average"));
               }
               System.out.println("Count: " + res.getInt("count"));
           }

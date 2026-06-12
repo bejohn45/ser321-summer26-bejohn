@@ -62,3 +62,9 @@ tasks.register('simpleTest', Test) { // run only the ServerTest class, expects t
         includeTestsMatching "Testing"
     }
 }
+
+tasks.withType(Test).configureEach {
+    testLogging {
+        events "passed", "failed", "skipped"
+    }
+}

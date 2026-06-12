@@ -324,7 +324,7 @@ public class SockServer {
       if (amount < 0) 
       {
           res.put("ok", false);
-          res.put("message", "Amount cannot be negative");
+          res.put("message", "Field 'amount' cannot be negative");
           return res;
       }
 
