@@ -38,7 +38,7 @@ class SockClient {
       System.out.println("Client connected to server.");
       boolean requesting = true;
       while (requesting) {
-        System.out.println("What would you like to do: 1 - echo, 2 - add, 3 - string concatenation, 4 - calculate many, (0 to quit)");
+        System.out.println("What would you like to do: 1 - echo, 2 - add, 3 - string concatenation, 4 - calculate many, 5 - currency (0 to quit)");
         Scanner scanner = new Scanner(System.in);
         int choice = Integer.parseInt(scanner.nextLine());
         // You can assume the user put in a correct input, you do not need to handle errors here
@@ -90,6 +90,18 @@ class SockClient {
             json.put("numList", jsonArray);
             break;
             // TODO: implement currency (4) or playlist (5) for Part C
+          case 5:
+            System.out.println("Choose currency converted, enter amount:");
+            double amount = Double.parseDouble(scanner.nextLine());
+            json.put("type", "currency");
+            json.put("amount", amount);
+            System.out.println("Enter currency to convert from: USD, EUR, or GBP");
+            String from = scanner.nextLine();
+            System.out.println("Enter currency to convert to: USD, EUR, or GBP");
+            String to = scanner.nextLine();
+            json.put("from", from);
+            json.put("to", to);
+            break;
         }
         if(!requesting) {
           continue;
@@ -106,13 +118,48 @@ class SockClient {
         String i = (String) in.readUTF();
         JSONObject res = new JSONObject(i);
         System.out.println("Got response: " + res);
-        if (res.getBoolean("ok")){
-          if (res.getString("type").equals("echo")) {
-            System.out.println(res.getString("echo"));
-          } else {
-            System.out.println(res.getInt("result"));
+        if (res.getBoolean("ok"))
+        {
+          if (res.getString("type").equals("echo")) 
+          {
+              System.out.println(res.getString("echo"));
+          } 
+          else if (res.getString("type").equals("add"))
+          {
+              System.out.println(res.getInt("result"));
           }
-        } else {
+          else if (res.getString("type").equals("stringconcatenation"))
+          {
+              System.out.println(res.getString("result"));
+          }
+          else if (res.getString("type").equals("calculatemany"))
+          {
+              String operation = res.getString("operation");
+              if (operation.equals("add"))
+              {
+                  System.out.println("Sum: " + res.getInt("result"));
+              }
+              else if (operation.equals("multiply"))
+              {
+                  System.out.println("Product: " + res.getInt("result"));
+              }
+              else if (operation.equals("average"))
+              {
+                  System.out.println("Average: " + res.getInt("result"));
+              }
+              System.out.println("Count: " + res.getInt("count"));
+          }
+          else if (res.getString("type").equals("currency"))
+          {
+              System.out.println(res.getDouble("amount") + " " + res.getString("from") + " = " + res.getDouble("result") + " " + res.getString("to"));
+              System.out.println("Rate: " + res.getDouble("rate"));
+          }
+          else 
+          {
+              System.out.println(res.toString());
+          }
+        } 
+        else {
           System.out.println(res.getString("message"));
         }
       }

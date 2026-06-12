@@ -94,10 +94,16 @@ public class SockServer {
             res = calculatemany(req);
           } else if (req.getString("type").equals("stringconcatenation")) {
             res = concat(req);
-          } else if (req.getString("type").equals("analyzer")) {
+          } 
+          else if (req.getString("type").equals("currency")) 
+          {
+            res = currency(req);
+          }
+          else if (req.getString("type").equals("analyzer")) {
             // Mystery service - discover the protocol
             res = MysteryService.processRequest(req);
-          } else {
+          } 
+          else {
             res = wrongType(req);
           }
           writeOut(res);
@@ -271,6 +277,120 @@ public class SockServer {
     }
 
     return res;
+  }
+
+  /**
+   * Handles the currency conversion request
+   */
+  static JSONObject currency(JSONObject req) 
+  {
+      System.out.println("Currency conversion request: " + req.toString());
+      JSONObject res = new JSONObject();
+
+      // check for amount field
+      JSONObject amountCheck = testField(req, "amount");
+      if (!amountCheck.getBoolean("ok")) 
+      {
+          return amountCheck;
+      }
+
+      // check for from field
+      JSONObject fromCheck = testField(req, "from");
+      if (!fromCheck.getBoolean("ok")) 
+      {
+          return fromCheck;
+      }
+
+      // check for to field
+      JSONObject toCheck = testField(req, "to");
+      if (!toCheck.getBoolean("ok")) 
+      {
+          return toCheck;
+      }
+
+      // check if amount in request is number
+      double amount;
+      try
+      {
+          amount = req.getDouble("amount");
+      } 
+      catch (org.json.JSONException e) 
+      {
+          res.put("ok", false);
+          res.put("message", "Field 'amount' needs to be a number");
+          return res;
+      }
+      // check if amount is negative
+      if (amount < 0) 
+      {
+          res.put("ok", false);
+          res.put("message", "Amount cannot be negative");
+          return res;
+      }
+
+      // check if from is string
+      String from;
+      String to;
+      try 
+      {
+          from = req.getString("from");
+      } 
+      catch (org.json.JSONException e) 
+      {
+          res.put("ok", false);
+          res.put("message", "Field 'from' needs to be a string");
+          return res;
+      }
+      // check if to is string
+      try
+      {
+          to = req.getString("to");
+      } 
+      catch (org.json.JSONException e) 
+      {
+          res.put("ok", false);
+          res.put("message", "Field 'to' needs to be a string");
+          return res;
+      }
+
+      // using USD as base
+      Map<String, Double> rates = new HashMap<>();
+      rates.put("USD", 1.0);
+      rates.put("EUR", 0.92);
+      rates.put("GBP", 0.79);
+
+      // check if from is valid currency
+      if (!rates.containsKey(from))
+      {
+          res.put("ok", false);
+          res.put("message", "Field 'from' must be one of: USD, EUR, GBP");
+          return res;
+      }
+      // check if to is valid currency
+      if (!rates.containsKey(to))
+      {
+          res.put("ok", false);
+          res.put("message", "Field 'to' must be one of: USD, EUR, GBP");
+          return res;
+      }
+
+      // convert
+      double amountInUSD = amount / rates.get(from);
+      double converted = amountInUSD * rates.get(to);
+      converted = Math.round(converted * 100.0) / 100.0; 
+      double rate = rates.get(to) / rates.get(from);
+      rate = Math.round(rate * 10000.0) / 10000.0;
+
+      // build response
+      res.put("ok", true);
+      res.put("type", "currency");
+      res.put("from", from);
+      res.put("to", to);
+      res.put("amount", amount);
+      res.put("result", converted);
+      res.put("rate", rate);
+
+      return res;
   }
 
 
