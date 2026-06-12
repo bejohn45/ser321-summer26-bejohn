@@ -137,8 +137,166 @@ Error response:
 2. Testing the service with various inputs (add the service to the client or write Unit Tests to test)
 3. Write the complete protocol specification here (follow the format of echo and add above)
 4. Document ALL possible error cases (hint: there are at least 4 different error cases)
-
 YOUR PROTOCOL DOCUMENTATION GOES HERE
+
+
+Request:
+
+    {
+        "type" : "calculatemany", -- type of request
+        "numList" : [JSONArray]  -- array of integers
+        "operation" : <String> -- operation to do -- needs to be "add, "multiply", or "average"
+    }
+
+General response:
+
+    {
+        "type" : "calculatemany", -- echoes the initial response
+        "ok" : <bool>, -- true or false depending on request
+        "operation" : <String>,  -- operation performed if ok true
+        "count" : <int>,  -- number of integers in numList if ok true
+        "sum" : <int>, -- result of add operation if ok true and operation "add"
+        "product" : <int>, -- result of multiply operation if ok true and operation "multiply"
+        "average" : <double>, -- result of average operation if ok true and operation "average"
+        "message" : <String> -- error message if ok false 
+    }
+
+#### Add ####
+
+Success response for add:
+
+    {
+        "type" : "calculatemany",
+        "ok" : true,
+        "operation" : "add",
+        "count" : <int>, -- count of numList
+        "sum" : <int> -- sum of integers in numList
+    }
+
+Example add request:
+
+    {
+        "type" : "calculatemany",
+        "ok" : [1,2,3,4,5],
+        "operation" : "add",
+    }
+
+Example add response:
+
+    {
+        "type" : "calculatemany",
+        "ok" : true,
+        "operation" : "add",
+        "count" : 5,
+        "sum" : 15
+    }
+
+#### Multiply ####
+
+Success response for multiply:
+
+    {
+        "type" : "calculatemany",
+        "ok" : true,
+        "operation" : "multiply",
+        "count" : <int>, -- count of numList
+        "product" : <int> -- product of integers in numList
+    }
+
+Example multiply request:
+
+    {
+        "type" : "calculatemany",
+        "ok" : [1,2,3],
+        "operation" : "multiply",
+    }
+
+Example multiply response:
+
+    {
+        "type" : "calculatemany",
+        "ok" : true,
+        "operation" : "multiply",
+        "count" : 3,
+        "product" : 6
+    }
+
+#### Average ####
+
+Success response for average:
+
+    {
+        "type" : "calculatemany",
+        "ok" : true,
+        "operation" : "average",
+        "count" : <int>, -- count of numList
+        "average" : <int> -- average of integers in numList -- rounded 2 decimals
+    }
+
+Example average request:
+
+    {
+        "type" : "calculatemany",
+        "ok" : [1,2,3],
+        "operation" : "average",
+    }
+
+Example average response:
+
+    {
+        "type" : "calculatemany",
+        "ok" : true,
+        "operation" : "average",
+        "count" : 3,
+        "average" : 2
+    }
+
+#### Error Cases: ####
+
+Error response:
+
+    {
+        "ok" : false,
+        "message" : <String> -- what went wrong
+    }
+
+
+Empty numList array:
+
+    {
+        "ok" : false,
+        "message" : "Array 'numList' cannot be empty"
+    }
+
+Invalid operation:
+
+    {
+        
+        "ok" : false,
+        "messgage" : "Invalid operation 'median'. Valid operations: add, multiply, average"
+    }
+
+Non-integer value in numList:
+
+    {
+        "ok" : false,
+        "message" : "Values in numList must be integers"
+    }
+
+Missing numField field:
+
+    {
+        "ok" : false,
+        "message" : "Field numList does not exist in request"
+    }
+
+Missing operation field:
+
+    {
+        "ok" : false,
+        "message" : "Field operation does not exist in request"
+    }
+
 
 ### StringConcatenation: ###
 This service will concatenate two strings provided by the client. The client will send a request to the server with two strings to be concatenated.
