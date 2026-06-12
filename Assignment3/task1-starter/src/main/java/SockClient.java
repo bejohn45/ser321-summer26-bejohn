@@ -38,7 +38,7 @@ class SockClient {
       System.out.println("Client connected to server.");
       boolean requesting = true;
       while (requesting) {
-        System.out.println("What would you like to do: 1 - echo, 2 - add, 3 - string concatenation (0 to quit)");
+        System.out.println("What would you like to do: 1 - echo, 2 - add, 3 - string concatenation, 4 - calculate many, (0 to quit)");
         Scanner scanner = new Scanner(System.in);
         int choice = Integer.parseInt(scanner.nextLine());
         // You can assume the user put in a correct input, you do not need to handle errors here
@@ -73,6 +73,21 @@ class SockClient {
             json.put("type", "stringconcatenation");
             json.put("str1", str1);
             json.put("string2", str2);
+            break;
+          case 4:
+            System.out.println("Choose calculate many. Choose operation: add, multiply, or average");
+            String operation = scanner.nextLine();
+            json.put("type", "calculatemany");
+            json.put("operation", operation);
+            System.out.println("Enter numbers separated by commas:");
+            String nums = scanner.nextLine();
+            String[] numArray = nums.split(",");
+            JSONArray jsonArray = new JSONArray();
+            for (String num : numArray) 
+            {
+              jsonArray.put(Integer.parseInt(num.trim()));
+            }
+            json.put("numList", jsonArray);
             break;
             // TODO: implement currency (4) or playlist (5) for Part C
         }
