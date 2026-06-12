@@ -139,13 +139,12 @@ Error response:
 4. Document ALL possible error cases (hint: there are at least 4 different error cases)
 YOUR PROTOCOL DOCUMENTATION GOES HERE
 
-
 Request:
 
     {
         "type" : "calculatemany", -- type of request
-        "numList" : [JSONArray]  -- array of integers
-        "operation" : <String> -- operation to do -- needs to be "add, "multiply", or "average"
+        "numList" : [<int>],  -- array of integers
+        "operation" : <String> -- operation to do -- needs to be "add", "multiply", or "average"
     }
 
 General response:
@@ -177,8 +176,8 @@ Example add request:
 
     {
         "type" : "calculatemany",
-        "ok" : [1,2,3,4,5],
-        "operation" : "add",
+        "numList" : [1,2,3,4,5],
+        "operation" : "add"
     }
 
 Example add response:
@@ -207,8 +206,8 @@ Example multiply request:
 
     {
         "type" : "calculatemany",
-        "ok" : [1,2,3],
-        "operation" : "multiply",
+        "numList" : [1,2,3],
+        "operation" : "multiply"
     }
 
 Example multiply response:
@@ -230,15 +229,15 @@ Success response for average:
         "ok" : true,
         "operation" : "average",
         "count" : <int>, -- count of numList
-        "average" : <int> -- average of integers in numList -- rounded 2 decimals
+        "average" : <double> -- average of integers in numList -- rounded 2 decimals
     }
 
 Example average request:
 
     {
         "type" : "calculatemany",
-        "ok" : [1,2,3],
-        "operation" : "average",
+        "numList" : [1,2,3],
+        "operation" : "average"
     }
 
 Example average response:
@@ -248,7 +247,7 @@ Example average response:
         "ok" : true,
         "operation" : "average",
         "count" : 3,
-        "average" : 2
+        "average" : 2.0
     }
 
 #### Error Cases: ####
@@ -273,7 +272,7 @@ Invalid operation:
     {
         
         "ok" : false,
-        "messgage" : "Invalid operation 'median'. Valid operations: add, multiply, average"
+        "message" : "Invalid operation 'median'. Valid operations: add, multiply, average"
     }
 
 Non-integer value in numList:
@@ -283,7 +282,7 @@ Non-integer value in numList:
         "message" : "Values in numList must be integers"
     }
 
-Missing numField field:
+Missing numList field:
 
     {
         "ok" : false,
