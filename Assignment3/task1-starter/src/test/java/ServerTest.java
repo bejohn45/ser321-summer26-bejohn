@@ -186,4 +186,43 @@ public class ServerTest {
         addRequest();
     }
 
+    @Test
+    public void currencyRequest() throws IOException 
+    {
+        // success request
+        JSONObject req = new JSONObject();
+        req.put("type", "currency");
+        req.put("amount", 200.0);
+        req.put("from", "USD");
+        req.put("to", "EUR");
+
+        os.writeObject(req.toString());
+        os.flush();
+        String i = (String) in.readUTF();
+        JSONObject res = new JSONObject(i);
+
+        assertTrue(res.getBoolean("ok"));
+        assertEquals("currency", res.getString("type"));
+        assertEquals("USD", res.getString("from"));
+        assertEquals("EUR", res.getString("to"));
+        assertEquals(200.0, res.getDouble("amount"), 0.001);
+        assertEquals(184.0, res.getDouble("result"), 0.001);
+        assertEquals(0.92, res.getDouble("rate"), 0.001);
+
+        // error request- negative amount
+        JSONObject req2 = new JSONObject();
+        req2.put("type", "currency");
+        req2.put("amount", -2);
+        req2.put("from", "USD");
+        req2.put("to", "EUR");
+
+        os.writeObject(req2.toString());
+        os.flush();
+        i = (String) in.readUTF();
+        res = new JSONObject(i);
+
+        assertFalse(res.getBoolean("ok"));
+        assertEquals("Field 'amount' cannot be negative", res.getString("message"));
+    }
+
 }
