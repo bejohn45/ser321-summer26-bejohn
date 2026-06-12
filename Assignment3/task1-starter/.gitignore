@@ -1,0 +1,10 @@
+#Gradle
+.gradle/
+build/
+
+#shows untracked files in git status
+bin/
+*.class
+
+.DS_Store
+Thumbs.db
