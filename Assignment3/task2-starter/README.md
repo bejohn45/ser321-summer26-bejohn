@@ -126,7 +126,7 @@ The video demonstrates:
     "maxMisses" : 6, // max misses before game ends
     "score" : 0, // score at 0 to start
     "hintsUsed" : 0, // hints used start at 0
-    "lettersGuessed" : 0, // letters guessed by client start at 0
+    "lettersGuessed" : "[]", // empty array
     "gameOver" : false, // false if game active
     "won" : false // false if word not correctly guessed yet
 }
@@ -167,7 +167,7 @@ The video demonstrates:
     "maxMisses" : 6,
     "score" : "<integer>", // updated score -- +5 points per times letter is in word
     "hintsUsed" : "<integer>", // no change to hints
-    "lettersGuessed" : "<integer>", // incremented by 1
+    "lettersGuessed" : "[<char>]", // add new guess to array
     "gameOver" : false, // false if game active
     "won" : false // false if word not correctly guessed yet
 }
@@ -188,7 +188,7 @@ The video demonstrates:
     "maxMisses" : 6,
     "score" : "<integer>", // updated score -- -1 point
     "hintsUsed" : "<integer>", // no change to hints
-    "lettersGuessed" : "<integer>", // incremented by 1
+    "lettersGuessed" : "[<char>]", // add new guess to array
     "gameOver" : false, 
     "won" : false 
 }
@@ -203,13 +203,9 @@ The video demonstrates:
     "message" : "Correct! <letter> is in the word <times> times. You won the game!", // game winning guess
     "correct" : true, 
     "times" : "<integer>", 
-    "wordDisplay" : "<string>", // whole word
-    "hangman" : "<string>", // no change to hangman
     "misses" : "<integer",  // no change
-    "maxMisses" : 6,
-    "score" : "<integer>", // updated score -- +5 points per times and +20 points for winning
+    "score" : "<integer>", // updated score -- +5 points per times, +20 points for winning, and +10 if 0 hints w/ <=1 miss
     "hintsUsed" : "<integer>", // no change to hints
-    "lettersGuessed" : "<integer>", // incremented by 1
     "gameOver" : true, 
     "won" : true,
     "word" : "<String>" // word
@@ -224,14 +220,10 @@ The video demonstrates:
     "letter" : "<char>",
     "message" : "Wrong! <letter> is not in the word. Game over, you lost!", // guess wrong
     "correct" : false, 
-    "times" : 0, 
     "wordDisplay" : "<string>", // no change
     "hangman" : "<string>", // update hangman
     "misses" : 6,  // misus = maxMisses
-    "maxMisses" : 6,
     "score" : "<integer>", // updated score -- -1 point
-    "hintsUsed" : "<integer>", // no change to hints
-    "lettersGuessed" : "<integer>", // incremented by 1
     "gameOver" : true, 
     "won" : false ,
     "word" : "<String>" // word
@@ -256,31 +248,33 @@ The video demonstrates:
 
 ---
 
-### 4. Start New Game
+### 4. Guess Word
 
 **Request:**
 ```json
 {
-    "type": "start"
+    "type": "guessWord",
+    "wordGuess" : "<string>"
 }
 ```
 
-**Success Response:**
+**Correct Guess Response:**
 ```json
 {
-    "type" : "start",
+    "type" : "guessWord",
     "ok" : true,
-    "message" : "New game started!", // send message for new game started to client
-    "wordLength" : "<integer>", // length of word
-    "wordDisplay" : "<string>", // starts with "_ _ _ _ ..." to start and fills in as client guesses
-    "hangman" : "<string>", // hangman display
-    "misses" : 0, // guesses where client was wrong
-    "maxMisses" : 6, // max misses before game ends
+    "wordGuess" : "<String>",
+    "message" : "Correct! You won the game!",
+    "correct" : true, 
+    "wordDisplay" : "<string>", 
+    "hangman" : "<string>",  
+    "misses" : 0, 
+    "maxMisses" : 6, 
     "score" : 0, // score at 0 to start
-    "hintsUsed" : 0, // hints used start at 0
-    "lettersGuessed" : 0, // letters guessed by client start at 0
-    "gameOver" : false, // false if game active
-    "won" : false // false if word not correctly guessed yet
+    "hintsUsed" : 0, 
+    "lettersGuessed" : 0, 
+    "gameOver" : false, 
+    "won" : false 
 }
 ```
 

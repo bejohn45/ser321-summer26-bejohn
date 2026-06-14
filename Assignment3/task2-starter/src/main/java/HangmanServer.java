@@ -32,6 +32,7 @@ public class HangmanServer {
     static Set<Character> usedLetters = new HashSet<>();
     static int misses = 0;
     static int points = 0;
+    static int hintsUsed = 0;
     static boolean inGame = false;
 
     // Leaderboard - list of game results (you can change this any way you want)
@@ -44,15 +45,20 @@ public class HangmanServer {
     // Word list - loaded from resource file
     static String[] WORDS;
 
-    public static void main(String args[]) {
-        if (args.length != 1) {
+    public static void main(String args[]) 
+    {
+        if (args.length != 1) 
+        {
             System.out.println("Expected arguments: <port(int)>");
             System.exit(1);
         }
 
-        try {
+        try 
+        {
             port = Integer.parseInt(args[0]);
-        } catch (NumberFormatException nfe) {
+        } 
+        catch (NumberFormatException nfe) 
+        {
             System.out.println("Port must be an integer");
             System.exit(2);
         }
@@ -61,11 +67,13 @@ public class HangmanServer {
         loadGameStages();
         loadWords();
 
-        try {
+        try 
+        {
             ServerSocket serv = new ServerSocket(port);
             System.out.println("Hangman Server ready for connections on port " + port);
 
-            while (true) {
+            while (true) 
+            {
                 System.out.println("Server waiting for a connection");
                 sock = serv.accept();
                 System.out.println("Client connected");
@@ -79,11 +87,15 @@ public class HangmanServer {
                 initGame();
 
                 boolean connected = true;
-                while (connected) {
+                while (connected) 
+                {
                     String s = "";
-                    try {
+                    try 
+                    {
                         s = (String) in.readObject();
-                    } catch (Exception e) {
+                    } 
+                    catch (Exception e) 
+                    {
                         System.out.println("Client disconnect");
                         connected = false;
                         continue;
@@ -97,7 +109,8 @@ public class HangmanServer {
 
                     JSONObject req = new JSONObject(s);
                     res = testField(req, "type");
-                    if (!res.getBoolean("ok")) {
+                    if (!res.getBoolean("ok")) 
+                    {
                         res = noType(req);
                         sendResponse(res);
                         continue;
@@ -105,22 +118,33 @@ public class HangmanServer {
 
                     // Route to appropriate handler
                     String type = req.getString("type");
-                    if (type.equals("name")) {
+                    if (type.equals("name")) 
+                    {
                         res = handleName(req);
                       /// include the other types
-                    } else if (type.equals("quit")) {
+                    } 
+                    else if (type.equals("start")) 
+                    {
+                        res = handleStart(req);
+                    }
+                    else if (type.equals("quit")) 
+                    {
                         res = handleQuit(req);
                         sendResponse(res);
                         connected = false;
                         continue;
-                    } else {
+                    } 
+                    else 
+                    {
                         res = wrongType(req);
                     }
                     sendResponse(res);
                 }
                 closeConnection();
             }
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             e.printStackTrace();
             closeConnection();
         }
@@ -131,15 +155,18 @@ public class HangmanServer {
      * This is provided as a complete example of request handling.
      * Use this as a reference for implementing other handlers.
      */
-    static JSONObject handleName(JSONObject req) {
+    static JSONObject handleName(JSONObject req) 
+    {
         System.out.println("Name request: " + req.toString());
         JSONObject res = testField(req, "name");
-        if (!res.getBoolean("ok")) {
+        if (!res.getBoolean("ok")) 
+        {
             return res;
         }
 
         String name = req.getString("name");
-        if (name == null || name.trim().isEmpty()) {
+        if (name == null || name.trim().isEmpty()) 
+        {
             res = new JSONObject();
             res.put("ok", false);
             res.put("message", "Name cannot be empty");
@@ -155,9 +182,55 @@ public class HangmanServer {
     }
 
     /**
+     * Start handler
+     */
+    static JSONObject handleStart(JSONObject req) 
+    {
+        System.out.println("Start request: " + req.toString());
+        JSONObject res = new JSONObject();
+
+        // check if player name set
+        if ((playerName == null || playerName.trim().isEmpty())) 
+        {
+            res.put("ok", false);
+            res.put("message", "You must set your name before starting the game");
+            return res;
+        }
+        // set new secret word and reset game state
+        Random random = new Random();
+        secretWord = WORDS[random.nextInt(WORDS.length)];
+        usedLetters = new HashSet<>();
+        misses = 0;
+        points = 0;
+        hintsUsed = 0;
+        inGame = true;
+
+        // print secret word for server
+        System.out.println("Secret word is: " + secretWord);
+
+        // build response
+        res.put("type", "start");
+        res.put("ok", true);
+        res.put("message", "New game started!");
+        res.put("wordLength", secretWord.length());
+        res.put("wordDisplay", showWordDisplay());
+        res.put("hangman", GAME_STAGES[misses]);
+        res.put("misses", misses);
+        res.put("maxMisses", 6);
+        res.put("score", points);
+        res.put("hintsUsed", hintsUsed);
+        res.put("lettersGuessed", getUsedLetters());
+        res.put("gameOver", !inGame);
+        res.put("won", false);
+
+        return res;
+    }
+
+    /**
      * Quit handler
      */
-    static JSONObject handleQuit(JSONObject req) {
+    static JSONObject handleQuit(JSONObject req) 
+    {
         System.out.println("Quit request: " + req.toString());
         JSONObject res = new JSONObject();
 
@@ -171,21 +244,25 @@ public class HangmanServer {
     /**
      * Helper: Initialize game state for new connection
      */
-    static void initGame() {
+    static void initGame() 
+    {
         playerName = null;
         secretWord = null;
         usedLetters = new HashSet<>();
         misses = 0;
         points = 0;
+        hintsUsed = 0;
         inGame = false;
     }
 
     /**
      * Helper: Check if field exists in request
      */
-    static JSONObject testField(JSONObject req, String key) {
+    static JSONObject testField(JSONObject req, String key) 
+    {
         JSONObject res = new JSONObject();
-        if (!req.has(key)) {
+        if (!req.has(key)) 
+        {
             res.put("ok", false);
             res.put("message", "Field '" + key + "' does not exist in request");
             return res;
@@ -196,13 +273,20 @@ public class HangmanServer {
     /**
      * Helper: Validate JSON
      */
-    static JSONObject isValid(String json) {
-        try {
+    static JSONObject isValid(String json) 
+    {
+        try 
+        {
             new JSONObject(json);
-        } catch (JSONException e) {
-            try {
+        } 
+        catch (JSONException e) 
+        {
+            try 
+            {
                 new JSONArray(json);
-            } catch (JSONException ne) {
+            } 
+            catch (JSONException ne) 
+            {
                 JSONObject res = new JSONObject();
                 res.put("ok", false);
                 res.put("message", "Request is not valid JSON");
@@ -215,7 +299,8 @@ public class HangmanServer {
     /**
      * Error: no type field
      */
-    static JSONObject noType(JSONObject req) {
+    static JSONObject noType(JSONObject req) 
+    {
         System.out.println("No type request: " + req.toString());
         JSONObject res = new JSONObject();
         res.put("ok", false);
@@ -226,7 +311,8 @@ public class HangmanServer {
     /**
      * Error: wrong type
      */
-    static JSONObject wrongType(JSONObject req) {
+    static JSONObject wrongType(JSONObject req) 
+    {
         System.out.println("Wrong type request: " + req.toString());
         JSONObject res = new JSONObject();
         res.put("ok", false);
@@ -237,10 +323,13 @@ public class HangmanServer {
     /**
      * Load game ASCII art stages from resource file
      */
-    static void loadGameStages() {
-        try {
+    static void loadGameStages() 
+    {
+        try 
+        {
             InputStream is = HangmanServer.class.getResourceAsStream("/game_stages.txt");
-            if (is == null) {
+            if (is == null) 
+            {
                 System.err.println("Error: game_stages.txt not found in resources");
                 System.exit(1);
             }
@@ -249,21 +338,28 @@ public class HangmanServer {
             StringBuilder currentStage = new StringBuilder();
             int stageIndex = 0;
 
-            while ((line = reader.readLine()) != null) {
-                if (line.equals("---")) {
+            while ((line = reader.readLine()) != null) 
+            {
+                if (line.equals("---")) 
+                {
                     GAME_STAGES[stageIndex++] = "\n" + currentStage.toString();
                     currentStage = new StringBuilder();
-                } else if (!line.startsWith("STAGE")) {
+                } 
+                else if (!line.startsWith("STAGE")) 
+                {
                     currentStage.append(line).append("\n");
                 }
             }
             // Add final stage
-            if (currentStage.length() > 0 && stageIndex < 7) {
+            if (currentStage.length() > 0 && stageIndex < 7) 
+            {
                 GAME_STAGES[stageIndex] = "\n" + currentStage.toString();
             }
             reader.close();
             System.out.println("Loaded " + (stageIndex + 1) + " game stages");
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             System.err.println("Error loading game stages: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
@@ -273,11 +369,15 @@ public class HangmanServer {
     /**
      * Load word list from resource file
      */
-    static void loadWords() {
-        try {
+    static void loadWords() 
+    {
+        try 
+        {
             WORDS = loadWordList("/words.txt");
             System.out.println("Loaded " + WORDS.length + " words");
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             System.err.println("Error loading word list: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
@@ -287,9 +387,11 @@ public class HangmanServer {
     /**
      * Helper: Load a single word list from file
      */
-    static String[] loadWordList(String filename) throws IOException {
+    static String[] loadWordList(String filename) throws IOException 
+    {
         InputStream is = HangmanServer.class.getResourceAsStream(filename);
-        if (is == null) {
+        if (is == null) 
+        {
             throw new IOException("Word list file not found: " + filename);
         }
 
@@ -297,9 +399,11 @@ public class HangmanServer {
         List<String> words = new ArrayList<>();
         String line;
 
-        while ((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) 
+        {
             line = line.trim();
-            if (!line.isEmpty()) {
+            if (!line.isEmpty()) 
+            {
                 words.add(line.toLowerCase());
             }
         }
@@ -311,11 +415,15 @@ public class HangmanServer {
     /**
      * Write response to client
      */
-    static void sendResponse(JSONObject res) {
-        try {
+    static void sendResponse(JSONObject res) 
+    {
+        try 
+        {
             os.writeObject(res.toString());
             os.flush();
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             e.printStackTrace();
         }
     }
@@ -323,12 +431,16 @@ public class HangmanServer {
     /**
      * Close connection
      */
-    static void closeConnection() {
-        try {
+    static void closeConnection() 
+    {
+        try 
+        {
             if (os != null) os.close();
             if (in != null) in.close();
             if (sock != null) sock.close();
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             e.printStackTrace();
         }
     }
