@@ -181,6 +181,67 @@ public class HangmanServer {
         return res;
     }
 
+
+    /**
+     * Show word display for client
+     */    
+    static String showWordDisplay() 
+    {
+        StringBuilder display = new StringBuilder();
+        for (int i = 0; i < secretWord.length(); i++)
+        {
+            char c = secretWord.charAt(i);
+            if (usedLetters.contains(c)) 
+            {
+                display.append(c);
+            } 
+            else 
+            {
+                display.append("_");
+            }
+            // add space between letters
+            if (i < (secretWord.length() - 1)) 
+            {
+                display.append(" ");
+            }
+        }
+        return display.toString();
+    }
+
+    /**
+     * Get used letters as JSONArray
+     */
+    static JSONArray getUsedLetters() 
+    {
+        // sort letters
+        List<Character> sortedLetters = new ArrayList<>(usedLetters);
+        Collections.sort(sortedLetters);
+        // add sorted letters to array
+        JSONArray letters = new JSONArray();
+        for (char c : sortedLetters) 
+        {
+            letters.put(String.valueOf(c));
+        }
+        return letters;
+    }
+
+     /**
+      * Count times a letter is in secret word
+      */
+    static int countTimes(char guessedLetter)
+    {
+        int count = 0;
+        for (int i = 0; i < secretWord.length(); i++)
+        {
+            if (secretWord.charAt(i) == guessedLetter) 
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+
     /**
      * Start handler
      */
