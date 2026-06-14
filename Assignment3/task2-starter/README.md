@@ -210,8 +210,8 @@ The video demonstrates:
     "score" : "<integer>", // updated score -- +5 points per times and +20 points for winning
     "hintsUsed" : "<integer>", // no change to hints
     "lettersGuessed" : "<integer>", // incremented by 1
-    "gameOver" : false, 
-    "won" : false,
+    "gameOver" : true, 
+    "won" : true,
     "word" : "<String>" // word
 }
 ```
@@ -226,23 +226,31 @@ The video demonstrates:
     "correct" : false, 
     "times" : 0, 
     "wordDisplay" : "<string>", // no change
-    "hangman" : "<string>", // no change to hangman
-    "misses" : "<integer",  // incremented by 1
+    "hangman" : "<string>", // update hangman
+    "misses" : 6,  // misus = maxMisses
     "maxMisses" : 6,
     "score" : "<integer>", // updated score -- -1 point
     "hintsUsed" : "<integer>", // no change to hints
     "lettersGuessed" : "<integer>", // incremented by 1
-    "gameOver" : false, 
-    "won" : false 
+    "gameOver" : true, 
+    "won" : false ,
+    "word" : "<String>" // word
 }
 ```
 
-
-**Error Response(s):**
+**Error Response: Invalid Letter:**
 ```json
 {
     "ok" : false,
-    "message" : "Player name must be set before starting a game!"
+    "message" : "<letter> is not a valid guess. Guess must be a letter from a-z!"
+}
+```
+
+**Error Response: Letter Already Guessed:**
+```json
+{
+    "ok" : false,
+    "message" : "<letter> has already been guessed!"
 }
 ```
 
