@@ -1,7 +1,7 @@
 # Assignment 3 Task 2: Hangman Game Protocol
 
-**Author:** [Your Name]
-**Date:** [Date]
+**Author:** Bevin John
+**Date:** 6/11/26
 
 ---
 
@@ -71,6 +71,8 @@ The video demonstrates:
 ### Overview
 [Provide a brief overview of your protocol design - what patterns did you use, how does communication work, etc.]
 
+
+
 ---
 
 ### 1. Set Player Name
@@ -107,23 +109,181 @@ The video demonstrates:
 **Request:**
 ```json
 {
-    [Your protocol design here]
+    "type": "start"
 }
 ```
 
 **Success Response:**
 ```json
 {
-    [Your protocol design here]
+    "type" : "start",
+    "ok" : true,
+    "message" : "New game started!", // send message for new game started to client
+    "wordLength" : "<integer>", // length of word
+    "wordDisplay" : "<string>", // starts with "_ _ _ _ ..." to start and fills in as client guesses
+    "hangman" : "<string>", // hangman display
+    "misses" : 0, // guesses where client was wrong
+    "maxMisses" : 6, // max misses before game ends
+    "score" : 0, // score at 0 to start
+    "hintsUsed" : 0, // hints used start at 0
+    "lettersGuessed" : 0, // letters guessed by client start at 0
+    "gameOver" : false, // false if game active
+    "won" : false // false if word not correctly guessed yet
 }
 ```
 
 **Error Response(s):**
 ```json
 {
-    [Document all possible errors]
+    "ok" : false,
+    "message" : "Player name must be set before starting a game!"
 }
 ```
+
+---
+
+### 3. Guess Letter
+
+**Request:**
+```json
+{
+    "type": "guessLetter",
+    "letter" : "<char>"
+}
+```
+
+**Correct Guess Response:**
+```json
+{
+    "type" : "guessLetter",
+    "ok" : true,
+    "letter" : "<char>",
+    "message" : "Correct! <letter> is in the word <times> times.", // guess correct -- show client how many times letter is in word
+    "correct" : true, 
+    "times" : "<integer>", // number of times letter is in word
+    "wordDisplay" : "<string>", // replaces _ in word with wherever letter is
+    "hangman" : "<string>", // no change to hangman
+    "misses" : "<integer",  // no change to misses
+    "maxMisses" : 6,
+    "score" : "<integer>", // updated score -- +5 points per times letter is in word
+    "hintsUsed" : "<integer>", // no change to hints
+    "lettersGuessed" : "<integer>", // incremented by 1
+    "gameOver" : false, // false if game active
+    "won" : false // false if word not correctly guessed yet
+}
+```
+
+**Incorrect Guess Response:**
+```json
+{
+    "type" : "guessLetter",
+    "ok" : true,
+    "letter" : "<char>",
+    "message" : "Wrong! <letter> is not in the word.", // guess wrong
+    "correct" : false, 
+    "times" : 0, 
+    "wordDisplay" : "<string>", // no change
+    "hangman" : "<string>", // no change to hangman
+    "misses" : "<integer",  // incremented by 1
+    "maxMisses" : 6,
+    "score" : "<integer>", // updated score -- -1 point
+    "hintsUsed" : "<integer>", // no change to hints
+    "lettersGuessed" : "<integer>", // incremented by 1
+    "gameOver" : false, 
+    "won" : false 
+}
+```
+
+**Winning Game Response:**
+```json
+{
+    "type" : "guessLetter",
+    "ok" : true,
+    "letter" : "<char>",
+    "message" : "Correct! <letter> is in the word <times> times. You won the game!", // game winning guess
+    "correct" : true, 
+    "times" : "<integer>", 
+    "wordDisplay" : "<string>", // whole word
+    "hangman" : "<string>", // no change to hangman
+    "misses" : "<integer",  // no change
+    "maxMisses" : 6,
+    "score" : "<integer>", // updated score -- +5 points per times and +20 points for winning
+    "hintsUsed" : "<integer>", // no change to hints
+    "lettersGuessed" : "<integer>", // incremented by 1
+    "gameOver" : false, 
+    "won" : false,
+    "word" : "<String>" // word
+}
+```
+
+**Losing Game Response:**
+```json
+{
+    "type" : "guessLetter",
+    "ok" : true,
+    "letter" : "<char>",
+    "message" : "Wrong! <letter> is not in the word. Game over, you lost!", // guess wrong
+    "correct" : false, 
+    "times" : 0, 
+    "wordDisplay" : "<string>", // no change
+    "hangman" : "<string>", // no change to hangman
+    "misses" : "<integer",  // incremented by 1
+    "maxMisses" : 6,
+    "score" : "<integer>", // updated score -- -1 point
+    "hintsUsed" : "<integer>", // no change to hints
+    "lettersGuessed" : "<integer>", // incremented by 1
+    "gameOver" : false, 
+    "won" : false 
+}
+```
+
+
+**Error Response(s):**
+```json
+{
+    "ok" : false,
+    "message" : "Player name must be set before starting a game!"
+}
+```
+
+---
+
+### 4. Start New Game
+
+**Request:**
+```json
+{
+    "type": "start"
+}
+```
+
+**Success Response:**
+```json
+{
+    "type" : "start",
+    "ok" : true,
+    "message" : "New game started!", // send message for new game started to client
+    "wordLength" : "<integer>", // length of word
+    "wordDisplay" : "<string>", // starts with "_ _ _ _ ..." to start and fills in as client guesses
+    "hangman" : "<string>", // hangman display
+    "misses" : 0, // guesses where client was wrong
+    "maxMisses" : 6, // max misses before game ends
+    "score" : 0, // score at 0 to start
+    "hintsUsed" : 0, // hints used start at 0
+    "lettersGuessed" : 0, // letters guessed by client start at 0
+    "gameOver" : false, // false if game active
+    "won" : false // false if word not correctly guessed yet
+}
+```
+
+**Error Response(s):**
+```json
+{
+    "ok" : false,
+    "message" : "Player name must be set before starting a game!"
+}
+```
+
 
 ## Error Handling Strategy
 
