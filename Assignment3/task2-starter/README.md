@@ -33,7 +33,7 @@ gradle Client -Phost=localhost -Pport=8888
 
 ## Video Demonstration
 
-**Link:** [Insert link to your 4-7 minute video demonstration here]
+**Link:** [[Insert link to your 4-7 minute video demonstration here](https://youtu.be/4am290UGnl0)]
 
 The video demonstrates:
 - Starting server and client
