@@ -135,6 +135,10 @@ public class HangmanServer {
                     {
                         res = handleGameState(req);
                     }
+                    else if (type.equals("hint"))
+                    {
+                        res = handleHint(req);
+                    }
                     else if (type.equals("quit")) 
                     {
                         res = handleQuit(req);
@@ -464,6 +468,72 @@ public class HangmanServer {
         res.put("type", "gameState");
         res.put("ok", true);
         res.put("message", "Current game state: ");
+        res.put("wordDisplay", showWordDisplay());
+        res.put("hangman", GAME_STAGES[misses]);
+        res.put("misses", misses);
+        res.put("maxMisses", 6);
+        res.put("score", points);
+        res.put("hintsUsed", hintsUsed);
+        res.put("lettersGuessed", getUsedLetters());
+        res.put("gameOver", false);
+        res.put("won", false);
+        return res;
+    }
+
+
+    static JSONObject handleHint(JSONObject req)
+    {
+        System.out.println("Hint request: " + req.toString());
+        JSONObject res = new JSONObject();
+
+        // find letters not guessed
+        List<Character> notGuessed = new ArrayList<>();
+        for (int i = 0; i < secretWord.length(); i++)
+        {
+            char letter = secretWord.charAt(i);
+            if ((!usedLetters.contains(letter)) && (!notGuessed.contains(letter)))
+            {
+                notGuessed.add(letter);
+            }
+        }
+
+        // choose random not guessed letter
+        Random random = new Random();
+        char hintLetter = notGuessed.get(random.nextInt(notGuessed.size()));
+        // update server state
+        usedLetters.add(hintLetter);
+        hintsUsed++;
+        points -= 8;
+        int times = countTimes(hintLetter);
+        boolean won = isWordGuessed();
+
+        // build response
+        res.put("type", "hint");
+        res.put("ok", true);
+        res.put("hintLetter", String.valueOf(hintLetter));
+        res.put("times", times);
+        
+        // check if won
+        if (won)
+        {
+            points += 20;
+            inGame = false;
+            res.put("message", "Hint showed the final letter " + hintLetter + ". You won the game!");
+            res.put("wordDisplay", showWordDisplay());
+            res.put("hangman", GAME_STAGES[misses]);
+            res.put("misses", misses);
+            res.put("maxMisses", 6);
+            res.put("score", points);
+            res.put("hintsUsed", hintsUsed);
+            res.put("lettersGuessed", getUsedLetters());
+            res.put("gameOver", true);
+            res.put("won", true);
+            res.put("word", secretWord);
+            return res;
+        }
+
+        // in game still
+        res.put("message", "Hint showed the letter " + hintLetter + " !");
         res.put("wordDisplay", showWordDisplay());
         res.put("hangman", GAME_STAGES[misses]);
         res.put("misses", misses);

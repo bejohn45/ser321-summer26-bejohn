@@ -168,7 +168,7 @@ public class HangmanClient
         } 
         else if (input.equals("3"))
         {
-            // TODO: implement me
+            getHint();
             return true;
         } 
         else if (input.equals("4")) 
@@ -374,6 +374,38 @@ public class HangmanClient
         System.out.println("Letters guessed : " +response.getJSONArray("lettersGuessed").length());
     }
 
+    /**
+     * Get hint from server
+     */
+    static void getHint()
+    {
+        JSONObject request = new JSONObject();
+        request.put("type", "hint");
+        JSONObject response = sendRequest(request);
+        // check if null response
+        if (response == null)
+        {
+            return;
+        }
+        // check if error response
+        if (!response.getBoolean("ok"))
+        {
+            System.out.println("\nError: " + response.getString("message"));
+            return;
+        }
+        // show hint
+        System.out.println("\n" +response.getString("message"));
+        displayGame(response);
+
+        // check if game over
+        if (response.getBoolean("gameOver"))
+        {
+            System.out.println("Word: " + response.getString("word"));
+            System.out.println("Final score: " + response.getInt("score"));
+            System.out.println("Hints used: " + response.getInt("hintsUsed"));
+            inGame = false;
+        }
+    }
 
     /**
      * Quit game
