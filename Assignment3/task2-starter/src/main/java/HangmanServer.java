@@ -36,7 +36,7 @@ public class HangmanServer {
     static boolean inGame = false;
 
     // Leaderboard - list of game results (you can change this any way you want)
-    static List<Map<String, Object>> leaderboard = new ArrayList<>();
+    static Map<String, PlayerStats> leaderboard = new HashMap<>();
 
     // Game ASCII art - 7 stages (0-6 misses allowed)
     // Loaded from resources/game_stages.txt
@@ -44,6 +44,42 @@ public class HangmanServer {
 
     // Word list - loaded from resource file
     static String[] WORDS;
+
+    // inner class to track player stats
+    static class PlayerStats 
+    {
+        String name;
+        int gamesPlayed;
+        int gamesWon;
+        int totalPoints;
+        int bestScore;
+
+        public PlayerStats(String name) 
+        {
+            this.name = name;
+            this.gamesPlayed = 0;
+            this.gamesWon = 0;
+            this.totalPoints = 0;
+            this.bestScore = 0;
+        }
+
+        // update stats after a game
+        public void recordGame(boolean won, int points) 
+        {
+            // if first game set best score
+            if ((gamesPlayed == 0) || (points > bestScore)) 
+            {
+                bestScore = points;
+            }
+
+            gamesPlayed++;
+            if (won) 
+            {
+                gamesWon++;
+            }
+            totalPoints += points;
+        }
+    }
 
     public static void main(String args[]) 
     {
@@ -150,6 +186,10 @@ public class HangmanServer {
                     else if (type.equals("giveUp"))
                     {
                         res = handleGiveUp(req);
+                    }
+                    else if (type.equals("leaderboard"))
+                    {
+                        res = handleLeaderboard(req);
                     }
                     else if (type.equals("quit")) 
                     {
@@ -420,6 +460,8 @@ public class HangmanServer {
             res.put("gameOver", true);
             res.put("won", true);
             res.put("word", secretWord);
+            // update leaderboard
+            updateLeaderboard(true);
             return res;
         }
 
@@ -441,6 +483,7 @@ public class HangmanServer {
             res.put("gameOver", true);
             res.put("won", false);
             res.put("word", secretWord);
+            updateLeaderboard(false);
             return res;
         }
 
@@ -533,6 +576,8 @@ public class HangmanServer {
             res.put("gameOver", true);
             res.put("won", true);
             res.put("word", secretWord);
+            // update leaderboard
+            updateLeaderboard(true);
             return res;
         }
 
@@ -556,6 +601,7 @@ public class HangmanServer {
             res.put("gameOver", true);
             res.put("won", false);
             res.put("word", secretWord);
+            updateLeaderboard(false);
             return res;
 
         }
@@ -649,6 +695,8 @@ public class HangmanServer {
             res.put("gameOver", true);
             res.put("won", true);
             res.put("word", secretWord);
+            // update leaderboard
+            updateLeaderboard(true);
             return res;
         }
 
@@ -716,6 +764,78 @@ public class HangmanServer {
         res.put("won", false);
         res.put("word", secretWord);
         return res;
+    }
+
+
+    /**
+     * Handle leaderboard request
+     */
+    static JSONObject handleLeaderboard(JSONObject req)
+    {
+        System.out.println("Leaderboard request: " + req.toString());
+        JSONObject res = new JSONObject();
+        JSONArray players = new JSONArray();
+        // rank by best score
+        List<PlayerStats> sortedStats = new ArrayList<>(leaderboard.values());
+        sortedStats.sort((a, b) ->
+        {
+            int scoreCompare = Integer.compare(b.bestScore, a.bestScore);
+            // if tie, check name
+            if (scoreCompare == 0) 
+            {
+                return a.name.compareToIgnoreCase(b.name);
+            }
+            return scoreCompare;
+        });
+
+        // compute stats for each player
+        for (PlayerStats stats : sortedStats)
+        {
+            double averageScore = (double) stats.totalPoints / stats.gamesPlayed;
+            double winPercentage = ((double) stats.gamesWon / stats.gamesPlayed) * 100.0;
+            // round 2 decimals
+            averageScore = Math.round(averageScore * 100.0) / 100.0;
+            winPercentage = Math.round(winPercentage * 100.0) / 100.0;
+            JSONObject player = new JSONObject();
+            player.put("name", stats.name);
+            player.put("bestScore", stats.bestScore);
+            player.put("averageScore", averageScore);
+            player.put("winPercentage", winPercentage);
+            player.put("gamesPlayed", stats.gamesPlayed);
+            players.put(player);
+        }
+
+        // build response 
+        res.put("type", "leaderboard");
+        res.put("ok", true);
+        // check if no players in leaderboard
+        if (players.length() == 0)
+        {
+            res.put("message", "No completed games yet! Leaderboard is empty.");
+        }
+        else
+        {
+            res.put("message", "Leaderboard ranked by best score.");
+        }
+
+        res.put("players", players);
+        return res;
+    }
+
+
+    /**
+     * Update leaderboard with game result
+     */
+    static void updateLeaderboard(boolean won)
+    {
+        PlayerStats stats = leaderboard.get(playerName);
+        // check if player not in leaderboard
+        if (stats == null) 
+        {
+            stats = new PlayerStats(playerName);
+            leaderboard.put(playerName, stats);
+        }
+        stats.recordGame(won, points);
     }
 
 

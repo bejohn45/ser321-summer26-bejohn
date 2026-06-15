@@ -124,7 +124,8 @@ public class HangmanClient
                 startGame();
                 return true;
             case "2":
-                // TODO: implement me
+                // leaderboard
+                viewLeaderboard();
                 return true;
             case "3":
                 quit();
@@ -245,6 +246,50 @@ public class HangmanClient
         System.out.println("The word was: " + response.getString("word"));
         System.out.println("Your score was: " + response.getInt("score"));
         inGame = false;
+    }
+
+
+    /**
+     * View leaderboard
+     */
+    static void viewLeaderboard()
+    {
+        JSONObject req = new JSONObject();
+        req.put("type", "leaderboard");
+        JSONObject response = sendRequest(req);
+        // check if null response
+        if (response == null)
+        {
+            System.out.println("\nError communicating with the server. Unable to retrieve leaderboard.");
+            return;
+        }
+        // check if error response
+        if (!response.getBoolean("ok"))
+        {
+            System.out.println("\nError: " + response.getString("message"));
+            return;
+        }
+
+        JSONArray players = response.getJSONArray("players");
+        System.out.println("\n===== LEADERBOARD =====");
+        // check if leaderboard empty
+        if (players.length() == 0)
+        {
+            System.out.println(response.getString("message"));
+            return;
+        }
+        // print leaderboard
+        for (int i = 0; i < players.length(); i++)
+        {
+            JSONObject player = players.getJSONObject(i);
+            // print
+            System.out.println((i+1) + ". " + player.getString("name"));
+            System.out.println("   Best score: " + player.getInt("bestScore"));
+            System.out.printf("   Average score: %.2f\n", player.getDouble("averageScore"));
+            System.out.printf("   Win percentage: %.2f\n", player.getDouble("winPercentage"));
+            System.out.println("   Games played: " + player.getInt("gamesPlayed"));
+            System.out.println();
+        }
     }
 
     /**
