@@ -46,10 +46,10 @@ The video demonstrates:
 
 ### Core Features (Required)
 - [x] Set Player Name (provided as example)
-- [ ] Start New Game
-- [ ] Guess Letter
-- [ ] Game State
-- [ ] Win/Lose Detection
+- [x] Start New Game
+- [x] Guess Letter
+- [x] Game State
+- [x] Win/Lose Detection
 - [x] Graceful Quit
 
 ### Medium Features (Enhanced Gameplay)
@@ -59,7 +59,7 @@ The video demonstrates:
 - [ ] Give Up
 
 ### Advanced Features (Competition)
-- [ ] Scoring System
+- [x] Scoring System
 - [ ] Leaderboard
 
 **Note:** Mark [x] for completed features, [ ] for not implemented.
@@ -118,17 +118,17 @@ The video demonstrates:
 {
     "type" : "start",
     "ok" : true,
-    "message" : "New game started!", // send message for new game started to client
-    "wordLength" : "<integer>", // length of word
-    "wordDisplay" : "<string>", // starts with "_ _ _ _ ..." to start and fills in as client guesses
-    "hangman" : "<string>", // hangman display
-    "misses" : 0, // guesses where client was wrong
-    "maxMisses" : 6, // max misses before game ends
-    "score" : 0, // score at 0 to start
-    "hintsUsed" : 0, // hints used start at 0
-    "lettersGuessed" : "[]", // empty array
-    "gameOver" : false, // false if game active
-    "won" : false // false if word not correctly guessed yet
+    "message" : "New game started!",
+    "wordLength" : "<integer>",
+    "wordDisplay" : "<string>",
+    "hangman" : "<string>",
+    "misses" : 0,
+    "maxMisses" : 6,
+    "score" : 0,
+    "hintsUsed" : 0, 
+    "lettersGuessed" : "[]",
+    "gameOver" : false,
+    "won" : false
 }
 ```
 
@@ -148,7 +148,7 @@ The video demonstrates:
 ```json
 {
     "type": "guessLetter",
-    "letter" : "<char>"
+    "letter" : "<letter>"
 }
 ```
 
@@ -157,19 +157,19 @@ The video demonstrates:
 {
     "type" : "guessLetter",
     "ok" : true,
-    "letter" : "<char>",
-    "message" : "Correct! <letter> is in the word <times> times.", // guess correct -- show client how many times letter is in word
+    "letter" : "<letter>",
+    "message" : "Correct! <letter> is in the word <times> times.",
     "correct" : true, 
-    "times" : "<integer>", // number of times letter is in word
-    "wordDisplay" : "<string>", // replaces _ in word with wherever letter is
-    "hangman" : "<string>", // no change to hangman
-    "misses" : "<integer",  // no change to misses
+    "times" : "<integer>",
+    "wordDisplay" : "<string>",
+    "hangman" : "<string>",
+    "misses" : "<integer",
     "maxMisses" : 6,
-    "score" : "<integer>", // updated score -- +5 points per times letter is in word
-    "hintsUsed" : "<integer>", // no change to hints
-    "lettersGuessed" : "[<char>]", // add new guess to array
-    "gameOver" : false, // false if game active
-    "won" : false // false if word not correctly guessed yet
+    "score" : "<integer>",
+    "hintsUsed" : "<integer>",
+    "lettersGuessed" : "[<letter>]",
+    "gameOver" : false,
+    "won" : false
 }
 ```
 
@@ -178,18 +178,18 @@ The video demonstrates:
 {
     "type" : "guessLetter",
     "ok" : true,
-    "letter" : "<char>",
-    "message" : "Wrong! <letter> is not in the word.", // guess wrong
+    "letter" : "<letter>",
+    "message" : "Wrong! <letter> is not in the word.",
     "correct" : false, 
     "times" : 0, 
-    "wordDisplay" : "<string>", // no change
-    "hangman" : "<string>", // no change to hangman
-    "misses" : "<integer",  // incremented by 1
+    "wordDisplay" : "<string>",
+    "hangman" : "<string>",
+    "misses" : "<integer",
     "maxMisses" : 6,
-    "score" : "<integer>", // updated score -- -1 point
-    "hintsUsed" : "<integer>", // no change to hints
-    "lettersGuessed" : "[<char>]", // add new guess to array
-    "gameOver" : false, 
+    "score" : "<integer>",
+    "hintsUsed" : "<integer>",
+    "lettersGuessed" : ["<letter>"],
+    "gameOver" : false,
     "won" : false 
 }
 ```
@@ -199,16 +199,20 @@ The video demonstrates:
 {
     "type" : "guessLetter",
     "ok" : true,
-    "letter" : "<char>",
-    "message" : "Correct! <letter> is in the word <times> times. You won the game!", // game winning guess
+    "letter" : "<letter>",
+    "message" : "Correct! <letter> is in the word <times> times. You won the game!",
     "correct" : true, 
-    "times" : "<integer>", 
-    "misses" : "<integer",  // no change
-    "score" : "<integer>", // updated score -- +5 points per times, +20 points for winning, and +10 if 0 hints w/ <=1 miss
-    "hintsUsed" : "<integer>", // no change to hints
+    "times" : "<integer>",
+    "wordDisplay" : "<string>",
+    "hangman" : "<string>",
+    "misses" : "<integer",
+    "maxMisses" : 6,
+    "score" : "<integer>",
+    "hintsUsed" : "<integer>",
+    "lettersGuessed" : "[<letter>]",
     "gameOver" : true, 
     "won" : true,
-    "word" : "<String>" // word
+    "word" : "<String>"
 }
 ```
 
@@ -248,43 +252,54 @@ The video demonstrates:
 
 ---
 
-### 4. Guess Word
+### 4. Game State
 
 **Request:**
 ```json
 {
-    "type": "guessWord",
-    "wordGuess" : "<string>"
+    "type": "gameState",
 }
 ```
 
-**Correct Guess Response:**
+**Success Response:**
 ```json
 {
-    "type" : "guessWord",
+    "type" : "gameState",
     "ok" : true,
-    "wordGuess" : "<String>",
-    "message" : "Correct! You won the game!",
-    "correct" : true, 
+    "message" : "Current game state: ",
     "wordDisplay" : "<string>", 
     "hangman" : "<string>",  
-    "misses" : 0, 
+    "misses" : "<integer>", 
     "maxMisses" : 6, 
-    "score" : 0, // score at 0 to start
+    "score" : "<integer>",
     "hintsUsed" : 0, 
-    "lettersGuessed" : 0, 
+    "lettersGuessed" : ["<letter>"], 
     "gameOver" : false, 
     "won" : false 
 }
 ```
 
-**Error Response(s):**
+---
+
+### 4. Graceful Quit
+
+**Request:**
 ```json
 {
-    "ok" : false,
-    "message" : "Player name must be set before starting a game!"
+    "type": "quit",
 }
 ```
+
+**Success Response:**
+```json
+{
+    "type" : "quit",
+    "ok" : true,
+    "message" : "Goodbye <name>!"
+}
+```
+
+---
 
 
 ## Error Handling Strategy

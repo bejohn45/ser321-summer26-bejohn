@@ -131,6 +131,10 @@ public class HangmanServer {
                     {
                         res = handleGuessLetter(req);
                     }
+                    else if (type.equals("gameState"))
+                    {
+                        res = handleGameState(req);
+                    }
                     else if (type.equals("quit")) 
                     {
                         res = handleQuit(req);
@@ -435,6 +439,31 @@ public class HangmanServer {
             res.put("message", "Wrong! " +guessedLetter+ " is not in the word.");
         }
 
+        res.put("wordDisplay", showWordDisplay());
+        res.put("hangman", GAME_STAGES[misses]);
+        res.put("misses", misses);
+        res.put("maxMisses", 6);
+        res.put("score", points);
+        res.put("hintsUsed", hintsUsed);
+        res.put("lettersGuessed", getUsedLetters());
+        res.put("gameOver", false);
+        res.put("won", false);
+        return res;
+    }
+
+
+    /**
+     * Handle game state request
+     */
+    static JSONObject handleGameState(JSONObject req) 
+    {
+        System.out.println("Game state request: " + req.toString());
+        JSONObject res = new JSONObject();
+
+        // build response
+        res.put("type", "gameState");
+        res.put("ok", true);
+        res.put("message", "Current game state: ");
         res.put("wordDisplay", showWordDisplay());
         res.put("hangman", GAME_STAGES[misses]);
         res.put("misses", misses);

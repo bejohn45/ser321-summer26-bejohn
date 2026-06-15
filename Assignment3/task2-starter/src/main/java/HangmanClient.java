@@ -157,7 +157,8 @@ public class HangmanClient
         // Handle special commands
         if (input.equals("1")) 
         {
-            // TODO: implement me
+            // show game state
+            showGameState();
             return true;
         } 
         else if (input.equals("2")) 
@@ -344,6 +345,33 @@ public class HangmanClient
             }
             inGame = false;
         }
+    }
+
+    /**
+     * Show game state to client
+     */
+    static void showGameState()
+    {
+        JSONObject request = new JSONObject();
+        request.put("type", "gameState");
+        JSONObject response = sendRequest(request);
+
+        // check if null response
+        if (response == null)
+        {
+            return;
+        }
+        // check if error response
+        if (!response.getBoolean("ok"))
+        {
+            System.out.println("\nError: " + response.getString("message"));
+            return;
+        }
+        // print state
+        System.out.println("\n===== GAME STATE =====");
+        displayGame(response);
+        System.out.println("Hints used: " + response.getInt("hintsUsed"));
+        System.out.println("Letters guessed : " +response.getJSONArray("lettersGuessed").length());
     }
 
 
