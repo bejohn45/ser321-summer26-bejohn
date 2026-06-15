@@ -175,7 +175,7 @@ public class HangmanClient
         else if (input.equals("4")) 
         {
             giveUp();
-            return false;
+            return true;
         } 
         else if (input.equals("0")) 
         {
@@ -204,7 +204,6 @@ public class HangmanClient
     }
 
     /**
-     * TODO: Implement the rest
      * IMPORTANT: This should send a request to the server to end the game!
      * Just setting inGame = false locally creates a state mismatch
      * where the client thinks the game is over but the server still has it active.
@@ -220,17 +219,32 @@ public class HangmanClient
     {
         System.out.print("\nAre you sure you want to give up? (yes/no): ");
         String confirm = scanner.nextLine().trim().toLowerCase();
-        if (confirm.equals("yes") || confirm.equals("y")) 
-        {
-            // TODO: Send request to server to properly end the game
-            inGame = false;
-            System.out.println("\nYou gave up! Returning to main menu...\n");
-            System.out.println("[TODO: This should notify the server to end the game properly]");
-        } 
-        else 
+        if (!(confirm.equals("yes") || confirm.equals("y"))) 
         {
             System.out.println("\nContinuing game...");
+            return;
+        } 
+        
+        JSONObject request = new JSONObject();
+        request.put("type", "giveUp");
+        JSONObject response = sendRequest(request);
+        // check if null response
+        if (response == null)
+        {
+            System.out.println("\nError communicating with the server. Unable to give up.");
+            return;
         }
+        // check if error response
+        if (!response.getBoolean("ok"))
+        {
+            System.out.println("\nError: " + response.getString("message"));
+            return;
+        }
+
+        System.out.println("\n" + response.getString("message"));
+        System.out.println("The word was: " + response.getString("word"));
+        System.out.println("Your score was: " + response.getInt("score"));
+        inGame = false;
     }
 
     /**

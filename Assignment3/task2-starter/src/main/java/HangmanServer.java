@@ -147,6 +147,10 @@ public class HangmanServer {
                     {
                         res = handleGuessedLetters(req);
                     }
+                    else if (type.equals("giveUp"))
+                    {
+                        res = handleGiveUp(req);
+                    }
                     else if (type.equals("quit")) 
                     {
                         res = handleQuit(req);
@@ -685,6 +689,32 @@ public class HangmanServer {
         {
             res.put("message", "These are the letters you guessed " +playerName+ "!");
         }
+        return res;
+    }
+
+
+    /**
+     * Handle give up request
+     */
+    static JSONObject handleGiveUp(JSONObject req)
+    {
+        System.out.println("Give up request: " + req.toString());
+        JSONObject res = new JSONObject();
+
+        // end game
+        inGame = false;
+        // build response
+        res.put("type", "giveUp");
+        res.put("ok", true);
+        res.put("message", "You gave up! Returning to main menu...");
+        res.put("hangman", GAME_STAGES[misses]);
+        res.put("misses", misses);
+        res.put("score", points);
+        res.put("hintsUsed", hintsUsed);
+        res.put("lettersGuessed", getUsedLetters());
+        res.put("gameOver", true);
+        res.put("won", false);
+        res.put("word", secretWord);
         return res;
     }
 
