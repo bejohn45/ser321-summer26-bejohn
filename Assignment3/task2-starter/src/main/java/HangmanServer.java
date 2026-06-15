@@ -127,6 +127,10 @@ public class HangmanServer {
                     {
                         res = handleStart(req);
                     }
+                    else if (type.equals("guessLetter"))
+                    {
+                        res = handleGuessLetter(req);
+                    }
                     else if (type.equals("quit")) 
                     {
                         res = handleQuit(req);
@@ -241,6 +245,21 @@ public class HangmanServer {
         return count;
     }
 
+    /**
+     * Check if word guessed
+     */
+    static boolean isWordGuessed() 
+    {
+        for (int i = 0; i < secretWord.length(); i++)
+        {
+            if (!usedLetters.contains(secretWord.charAt(i))) 
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     /**
      * Start handler
@@ -286,6 +305,148 @@ public class HangmanServer {
 
         return res;
     }
+
+    /**
+     * Guess letter handler
+     */
+    static JSONObject handleGuessLetter(JSONObject req) 
+    {
+        System.out.println("Guess letter request: " + req.toString());
+        // check if letter field exists
+        JSONObject res = testField(req, "letter");
+        if (!res.getBoolean("ok")) 
+        {
+            return res;
+        }
+
+        // check if letter is string and not int
+        Object letterVal = req.get("letter");
+        if (!(letterVal instanceof String))
+        {
+            res = new JSONObject();
+            res.put("ok", false);
+            res.put("message", letterVal + " is not a valid guess. Guess must be a letter from a-z!");
+            return res;
+        }
+
+        // check guess is a letter a-z
+        String letterInput = ((String) letterVal).trim().toLowerCase();
+        if (!letterInput.matches("[a-z]"))
+        {
+            res = new JSONObject();
+            res.put("ok", false);
+            res.put("message", letterInput + " is not a valid guess. Guess must be a single letter from a-z!");
+            return res;
+        }
+
+        // check if letter already guessed
+        char guessedLetter = letterInput.charAt(0); 
+        if (usedLetters.contains(guessedLetter))
+        {
+            res = new JSONObject();
+            res.put("ok", false);
+            res.put("message", guessedLetter + " has already been guessed!");
+            return res;
+        }
+
+        // add letter
+        usedLetters.add(guessedLetter);
+        int times = countTimes(guessedLetter);
+        boolean correct = times > 0;
+
+        // update score and misses
+        if (correct)
+        {
+            points += times*5;
+        }
+        else
+        {
+            misses++;
+            points--;
+        }
+
+        boolean won = (correct) && (isWordGuessed());
+        boolean lost = (misses >= 6);
+
+        res = new JSONObject();
+        res.put("type", "guessLetter");
+        res.put("ok", true);
+        res.put("letter", String.valueOf(guessedLetter));
+        res.put("correct", correct);
+        res.put("times", times);
+
+        // winning response
+        if (won)
+        {
+            points +=20;
+
+            // check if perfect game
+            if ((hintsUsed == 0) && (misses <= 1))
+            {
+                points += 10;
+            }
+
+            inGame = false;
+
+            // build response
+            res.put("message", "Correct! " +guessedLetter+ " is in the word " +times+ " times. You won the game!");
+            res.put("wordDisplay", showWordDisplay());
+            res.put("hangman", GAME_STAGES[misses]);
+            res.put("misses", misses);
+            res.put("maxMisses", 6);
+            res.put("score", points);
+            res.put("hintsUsed", hintsUsed);
+            res.put("lettersGuessed", getUsedLetters());
+            res.put("gameOver", true);
+            res.put("won", true);
+            res.put("word", secretWord);
+            return res;
+        }
+
+        // losing response
+        if (lost)
+        {
+            misses = 6;
+            inGame = false;
+
+            // build response
+            res.put("message", "Wrong! " +guessedLetter+ " is not in the word. Game over, you lost!");
+            res.put("wordDisplay", showWordDisplay());
+            res.put("hangman", GAME_STAGES[misses]);
+            res.put("misses", misses);
+            res.put("maxMisses", 6);
+            res.put("score", points);
+            res.put("hintsUsed", hintsUsed);
+            res.put("lettersGuessed", getUsedLetters());
+            res.put("gameOver", true);
+            res.put("won", false);
+            res.put("word", secretWord);
+            return res;
+        }
+
+        // correct guess still in game
+        if (correct)
+        {
+            res.put("message", "Correct! " +guessedLetter+ " is in the word " +times+ " times.");
+        }
+        // wrong guess still in game
+        else
+        {
+            res.put("message", "Wrong! " +guessedLetter+ " is not in the word.");
+        }
+
+        res.put("wordDisplay", showWordDisplay());
+        res.put("hangman", GAME_STAGES[misses]);
+        res.put("misses", misses);
+        res.put("maxMisses", 6);
+        res.put("score", points);
+        res.put("hintsUsed", hintsUsed);
+        res.put("lettersGuessed", getUsedLetters());
+        res.put("gameOver", false);
+        res.put("won", false);
+        return res;
+    }
+
 
     /**
      * Quit handler

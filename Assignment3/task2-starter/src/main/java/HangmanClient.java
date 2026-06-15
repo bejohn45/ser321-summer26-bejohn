@@ -19,7 +19,8 @@ import java.util.Scanner;
  * - Protocol requests/responses for all game operations
  * - Proper response handling and display
  */
-public class HangmanClient {
+public class HangmanClient 
+{
     static Socket sock;
     static ObjectOutputStream oos;
     static ObjectInputStream in;
@@ -29,8 +30,10 @@ public class HangmanClient {
     static boolean hasName = false;
     static String playerName = "";
 
-    public static void main(String[] args) {
-        if (args.length != 2) {
+    public static void main(String[] args) 
+    {
+        if (args.length != 2) 
+        {
             System.out.println("Expected arguments: <host(String)> <port(int)>");
             System.exit(1);
         }
@@ -38,7 +41,8 @@ public class HangmanClient {
         String host = args[0];
         int port = Integer.parseInt(args[1]);
 
-        try {
+        try 
+        {
             sock = new Socket(host, port);
             oos = new ObjectOutputStream(sock.getOutputStream());
             in = new ObjectInputStream(sock.getInputStream());
@@ -49,19 +53,27 @@ public class HangmanClient {
             System.out.println();
 
             boolean running = true;
-            while (running) {
-                if (!hasName) {
+            while (running) 
+            {
+                if (!hasName) 
+                {
                     running = showInitialMenu();
-                } else if (!inGame) {
+                } 
+                else if (!inGame) 
+                {
                     running = showMainMenu();
-                } else {
+                } 
+                else 
+                {
                     running = showGameMenu();
                 }
                 System.out.println();
             }
 
             closeConnection();
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             e.printStackTrace();
         }
     }
@@ -69,7 +81,8 @@ public class HangmanClient {
     /**
      * Initial menu - before name is set
      */
-    static boolean showInitialMenu() {
+    static boolean showInitialMenu() 
+    {
         System.out.println("────────────────────────────────────────");
         System.out.println("  1. Set Your Name");
         System.out.println("  2. Quit");
@@ -77,7 +90,8 @@ public class HangmanClient {
         System.out.print("Enter choice: ");
 
         String choice = scanner.nextLine().trim();
-        switch (choice) {
+        switch (choice) 
+        {
             case "1":
                 setName();
                 return true;
@@ -93,7 +107,8 @@ public class HangmanClient {
     /**
      * Main menu - after name set, no active game
      */
-    static boolean showMainMenu() {
+    static boolean showMainMenu() 
+    {
         System.out.println("────────────────────────────────────────");
         System.out.println("MAIN MENU:");
         System.out.println("  1. Start New Game");
@@ -103,7 +118,8 @@ public class HangmanClient {
         System.out.print("Enter choice: ");
 
         String choice = scanner.nextLine().trim();
-        switch (choice) {
+        switch (choice) 
+        {
             case "1":
                 startGame();
                 return true;
@@ -124,7 +140,8 @@ public class HangmanClient {
      * Natural input: just type letter/word to guess
      * Commands: 1, 2, 3, 4, 0 for special actions
      */
-    static boolean showGameMenu() {
+    static boolean showGameMenu() 
+    {
         System.out.println("\n────────────────────────────────────────");
         System.out.println("Type a letter or word to guess");
         System.out.println("Or choose:");
@@ -138,19 +155,28 @@ public class HangmanClient {
         String input = scanner.nextLine().trim();
 
         // Handle special commands
-        if (input.equals("1")) {
+        if (input.equals("1")) 
+        {
             // TODO: implement me
             return true;
-        } else if (input.equals("2")) {
+        } 
+        else if (input.equals("2")) 
+        {
             // TODO: implement me
             return true;
-        } else if (input.equals("3")) {
+        } 
+        else if (input.equals("3"))
+        {
             // TODO: implement me
             return true;
-        } else if (input.equals("4")) {
+        } 
+        else if (input.equals("4")) 
+        {
             giveUp();
             return false;
-        } else if (input.equals("0")) {
+        } 
+        else if (input.equals("0")) 
+        {
             quit();
             return false;
         }
@@ -161,9 +187,13 @@ public class HangmanClient {
         }
 
         // Single character = letter guess, multiple = word guess
-        if (input.length() == 1) {
-            // TODO: implement me
-        } else {
+        if (input.length() == 1) 
+        {
+            // guess letter
+            guessLetter(input);
+        } 
+        else 
+        {
             // TODO: implement me
         }
 
@@ -183,15 +213,19 @@ public class HangmanClient {
      * - Server responds confirming game ended
      * - Client sets inGame = false
      */
-    static void giveUp() {
+    static void giveUp() 
+    {
         System.out.print("\nAre you sure you want to give up? (yes/no): ");
         String confirm = scanner.nextLine().trim().toLowerCase();
-        if (confirm.equals("yes") || confirm.equals("y")) {
+        if (confirm.equals("yes") || confirm.equals("y")) 
+        {
             // TODO: Send request to server to properly end the game
             inGame = false;
             System.out.println("\nYou gave up! Returning to main menu...\n");
             System.out.println("[TODO: This should notify the server to end the game properly]");
-        } else {
+        } 
+        else 
+        {
             System.out.println("\nContinuing game...");
         }
     }
@@ -201,7 +235,8 @@ public class HangmanClient {
      * This is provided as a complete example.
      * Use this as a reference for implementing other methods.
      */
-    static void setName() {
+    static void setName() 
+    {
         System.out.print("\nEnter your name: ");
         String name = scanner.nextLine().trim();
 
@@ -213,35 +248,116 @@ public class HangmanClient {
         // Send request and get response
         JSONObject response = sendRequest(request);
         if (response != null) {
-            if (response.getBoolean("ok")) {
+            if (response.getBoolean("ok")) 
+            {
                 hasName = true;
                 playerName = name;
                 System.out.println("\n" + response.getString("message"));
                 System.out.println();
-            } else {
+            } 
+            else 
+            {
                 System.out.println("✗ Error: " + response.getString("message"));
             }
         }
     }
+    
 
     /**
-     * TODO: Implement start game
-     * Should send a start request to the server and handle the response
+     * Send a start request to the server and handle the response
      */
-    static void startGame() {
-        System.out.println("\n[TODO: Implement start game - send start request to server]");
+    static void startGame() 
+    {
+        JSONObject request = new JSONObject();
+        request.put("type", "start");
+        JSONObject response = sendRequest(request);
+        // check if null response
+        if (response == null)
+        {
+            return;
+        }
+        // check if error response
+        if (!response.getBoolean("ok"))
+        {
+            System.out.println("Error: " + response.getString("message"));
+            return;
+        }
+
+        inGame = true;
+        System.out.println("\n" + response.getString("message"));
+        System.out.println("Word length: " + response.getInt("wordLength"));
+        System.out.println("Max misses allowed: " + response.getInt("maxMisses"));
+        displayGame(response);
+    }
+
+
+    /**
+     * Display game state using server response
+     */
+    static void displayGame(JSONObject response)
+    {
+        System.out.println(response.getString("hangman"));
+        System.out.println("Word: " + response.getString("wordDisplay"));
+        System.out.println("Misses: " +response.getInt("misses") + "/" + response.getInt("maxMisses"));
+        System.out.println("Score: " + response.getInt("score"));
+    }
+
+    /**
+     * 
+     */
+    static void guessLetter(String input)
+    {
+        JSONObject request = new JSONObject();
+        request.put("type", "guessLetter");
+        request.put("letter", input);
+
+        JSONObject response = sendRequest(request);
+
+        // check if null response
+        if (response == null)
+        {
+            return;
+        }
+        // check if error response
+        if (!response.getBoolean("ok"))
+        {
+            System.out.println("Error: " + response.getString("message"));
+            return;
+        }
+
+        System.out.println("\n" + response.getString("message"));
+        displayGame(response);
+
+        // check if game over
+        if (response.getBoolean("gameOver"))
+        {
+            System.out.println("Word: " + response.getString("word"));
+            System.out.println("Final score: " + response.getInt("score"));
+            System.out.println("Hints used: " + response.getInt("hintsUsed"));
+            if (response.getBoolean("won"))
+            {
+                System.out.println("You won!");
+            }
+            else
+            {
+                System.out.println("You lost!");
+            }
+            inGame = false;
+        }
     }
 
 
     /**
      * Quit game
      */
-    static boolean quit() {
+    static boolean quit() 
+    {
         JSONObject request = new JSONObject();
         request.put("type", "quit");
 
         JSONObject response = sendRequest(request);
-        if (response != null && response.getBoolean("ok")) {
+        if (response != null && response.getBoolean("ok")) 
+        {
             System.out.println("\n" + response.getString("message"));
             System.out.println("Thanks for playing!");
         }
@@ -252,15 +368,19 @@ public class HangmanClient {
      * Helper: Send request and receive response
      * This handles the basic communication pattern
      */
-    static JSONObject sendRequest(JSONObject request) {
-        try {
+    static JSONObject sendRequest(JSONObject request) 
+    {
+        try 
+        {
             String req = request.toString();
             oos.writeObject(req);
             oos.flush();
 
             String res = (String) in.readObject();
             return new JSONObject(res);
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             System.out.println("Error communicating with server: " + e.getMessage());
             return null;
         }
@@ -269,12 +389,16 @@ public class HangmanClient {
     /**
      * Close connection
      */
-    static void closeConnection() {
-        try {
+    static void closeConnection() 
+    {
+        try 
+        {
             if (oos != null) oos.close();
             if (in != null) in.close();
             if (sock != null) sock.close();
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             e.printStackTrace();
         }
     }
