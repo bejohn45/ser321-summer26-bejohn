@@ -163,7 +163,8 @@ public class HangmanClient
         } 
         else if (input.equals("2")) 
         {
-            // TODO: implement me
+            // show guessed letters
+            showGuessedLetters();
             return true;
         } 
         else if (input.equals("3"))
@@ -442,6 +443,49 @@ public class HangmanClient
             System.out.println("Hints used: " + response.getInt("hintsUsed"));
             inGame = false;
         }
+    }
+
+    /**
+     * Show guessed letters
+     */
+    static void showGuessedLetters()
+    {
+        JSONObject request = new JSONObject();
+        request.put("type", "guessedLetters");
+        JSONObject response = sendRequest(request);
+        // check if null response
+        if (response == null)
+        {
+            return;
+        }
+        // check if error response
+        if (!response.getBoolean("ok"))
+        {
+            System.out.println("\nError: " + response.getString("message"));
+            return;
+        }
+        // show guessed letters
+        JSONArray letters = response.getJSONArray("letters");
+        System.out.println("\n===== Guessed Letters =====");
+        // check if no letters
+        if (letters.length() == 0)
+        {
+            System.out.println(response.getString("message"));
+        }
+        else
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < letters.length(); i++)
+            {
+                if (i > 0)
+                {
+                    sb.append(", ");
+                }
+                sb.append(letters.getString(i));
+            }
+            System.out.println("Letters: " + sb.toString());
+        }
+        System.out.println("Total: " +response.getInt("total"));
     }
 
     /**

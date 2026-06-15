@@ -143,6 +143,10 @@ public class HangmanServer {
                     {
                         res = handleGuessWord(req);
                     }
+                    else if (type.equals("guessedLetters"))
+                    {
+                        res = handleGuessedLetters(req);
+                    }
                     else if (type.equals("quit")) 
                     {
                         res = handleQuit(req);
@@ -655,6 +659,32 @@ public class HangmanServer {
         res.put("lettersGuessed", getUsedLetters());
         res.put("gameOver", false);
         res.put("won", false);
+        return res;
+    }
+
+    /**
+     * Handle guessed letters request
+     */
+    static JSONObject handleGuessedLetters(JSONObject req)
+    {
+        System.out.println("Guessed letters request: " + req.toString());
+        JSONObject res = new JSONObject();
+        JSONArray letters = getUsedLetters();
+        // build response
+        res.put("type", "guessedLetters");
+        res.put("ok", true);
+        res.put("letters", letters);
+        res.put("total", letters.length());
+
+        // check if no letters guessed
+        if (letters.length() == 0)
+        {
+            res.put("message", "No letters guessed yet!");
+        }
+        else
+        {
+            res.put("message", "These are the letters you guessed " +playerName+ "!");
+        }
         return res;
     }
 
