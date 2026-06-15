@@ -195,7 +195,8 @@ public class HangmanClient
         } 
         else 
         {
-            // TODO: implement me
+            // guess word
+            guessWord(input);
         }
 
         return true;
@@ -395,6 +396,42 @@ public class HangmanClient
         }
         // show hint
         System.out.println("\n" +response.getString("message"));
+        displayGame(response);
+
+        // check if game over
+        if (response.getBoolean("gameOver"))
+        {
+            System.out.println("Word: " + response.getString("word"));
+            System.out.println("Final score: " + response.getInt("score"));
+            System.out.println("Hints used: " + response.getInt("hintsUsed"));
+            inGame = false;
+        }
+    }
+
+    /**
+     * Guess the entire word
+     */
+    static void guessWord(String input)
+    {
+        JSONObject request = new JSONObject();
+        request.put("type", "guessWord");
+        request.put("wordGuess", input);
+
+        JSONObject response = sendRequest(request);
+
+        // check if null response
+        if (response == null)
+        {
+            return;
+        }
+        // check if error response
+        if (!response.getBoolean("ok"))
+        {
+            System.out.println("Error: " + response.getString("message"));
+            return;
+        }
+
+        System.out.println("\n" + response.getString("message"));
         displayGame(response);
 
         // check if game over

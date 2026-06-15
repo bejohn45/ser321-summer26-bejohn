@@ -139,6 +139,10 @@ public class HangmanServer {
                     {
                         res = handleHint(req);
                     }
+                    else if (type.equals("guessWord"))
+                    {
+                        res = handleGuessWord(req);
+                    }
                     else if (type.equals("quit")) 
                     {
                         res = handleQuit(req);
@@ -452,6 +456,114 @@ public class HangmanServer {
         res.put("lettersGuessed", getUsedLetters());
         res.put("gameOver", false);
         res.put("won", false);
+        return res;
+    }
+
+    /**
+     * Guess word handler
+     */
+    static JSONObject handleGuessWord(JSONObject req)
+    {
+        System.out.println("Guess word request: " + req.toString());
+        JSONObject res = testField(req, "wordGuess");
+        if (!res.getBoolean("ok")) 
+        {
+            return res;
+        }
+
+        // check if word is string 
+        Object wordVal = req.get("wordGuess");
+        if (!(wordVal instanceof String))
+        {
+            res = new JSONObject();
+            res.put("ok", false);
+            res.put("message", wordVal + " is not a valid word guess. Word guess must be only letters a-z!");
+            return res;
+        }
+
+        // check if word is only letters a-z
+        String wordInput = ((String) wordVal).trim().toLowerCase();
+        if (!wordInput.matches("[a-z]+"))
+        {
+            res = new JSONObject();
+            res.put("ok", false);
+            res.put("message", wordInput + " is not a valid word guess. Word guess must be only letters a-z!");
+            return res;
+        }
+        // check if correct
+        boolean correct = wordInput.equals(secretWord);
+
+        res = new JSONObject();
+        res.put("type", "guessWord");
+        res.put("ok", true);
+        res.put("wordGuess", wordInput);
+        res.put("correct", correct);
+
+        // if correct guess
+        if (correct)
+        {
+            points += 20;
+            // check if perfect game
+            if ((hintsUsed == 0) && (misses <= 1))
+            {
+                points += 10;
+            }
+            inGame = false;
+            for (int i = 0; i < secretWord.length(); i++)
+            {
+                usedLetters.add(secretWord.charAt(i));
+            }
+            // build response
+            res.put("message", "Correct! You guessed the word " + secretWord + " and won the game!");
+            res.put("wordDisplay", showWordDisplay());
+            res.put("hangman", GAME_STAGES[misses]);
+            res.put("misses", misses);
+            res.put("maxMisses", 6);
+            res.put("score", points);
+            res.put("hintsUsed", hintsUsed);
+            res.put("lettersGuessed", getUsedLetters());
+            res.put("gameOver", true);
+            res.put("won", true);
+            res.put("word", secretWord);
+            return res;
+        }
+
+        // wrong word guess
+        misses += 2;
+        points -=2;
+        // check if more than 6 misses
+        if (misses >= 6)
+        {
+            misses = 6;
+            inGame = false;
+            // build response
+            res.put("message", "Wrong! " +wordInput+ " is not the word. Game over, you lost!");
+            res.put("wordDisplay", showWordDisplay());
+            res.put("hangman", GAME_STAGES[misses]);
+            res.put("misses", misses);
+            res.put("maxMisses", 6);
+            res.put("score", points);
+            res.put("hintsUsed", hintsUsed);
+            res.put("lettersGuessed", getUsedLetters());
+            res.put("gameOver", true);
+            res.put("won", false);
+            res.put("word", secretWord);
+            return res;
+
+        }
+
+        // wrong word guess still in game
+        res.put("message", "Wrong! " +wordInput+ " is not the word. 2 misses added.");
+        res.put("wordDisplay", showWordDisplay());
+        res.put("hangman", GAME_STAGES[misses]);
+        res.put("misses", misses);
+        res.put("maxMisses", 6);
+        res.put("score", points);
+        res.put("hintsUsed", hintsUsed);
+        res.put("lettersGuessed", getUsedLetters());
+        res.put("gameOver", false);
+        res.put("won", false);
+        
         return res;
     }
 
