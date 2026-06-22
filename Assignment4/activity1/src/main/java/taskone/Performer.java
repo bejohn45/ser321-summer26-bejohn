@@ -6,7 +6,10 @@ import java.util.List;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
+
+import taskone.proto.Request;
 import taskone.proto.Response;
+import taskone.proto.TaskProto;
 
 /**
  * Performer class handles client requests using JSON protocol.
@@ -37,8 +40,8 @@ public class Performer {
         try {
             inStream = clientSocket.getInputStream();
             outStream = clientSocket.getOutputStream();
-            in = new BufferedReader(new InputStreamReader(inStream));
-            out = new PrintWriter(outStream, true);
+            // in = new BufferedReader(new InputStreamReader(inStream));
+            // out = new PrintWriter(outStream, true);
 
             // Here you can see how the welcome message is created and sent in both JSON and Proto.
             // Swap comment brackets as desired just ensure you make matching changes in Client.java.
@@ -47,8 +50,8 @@ public class Performer {
             // JSON welcome message
             /////////////////////////////////////////////////////////////////////////////
             // Send welcome message.
-            JSONObject welcomeMessage = JsonUtils.createSuccessResponse("connect", "Connected to Task Management Server");
-            out.println(welcomeMessage);
+            // JSONObject welcomeMessage = JsonUtils.createSuccessResponse("connect", "Connected to Task Management Server");
+            // out.println(welcomeMessage);
             /////////////////////////////////////////////////////////////////////////////
             // End JSON welcome message
             /////////////////////////////////////////////////////////////////////////////
@@ -57,17 +60,19 @@ public class Performer {
             /////////////////////////////////////////////////////////////////////////////
             // Proto welcome message
             /////////////////////////////////////////////////////////////////////////////
-//            Response.Builder protoResp = Response.newBuilder().setType(Response.ResponseType.SUCCESS).setMessage("Connected to Proto Task Management Server");
-//            protoResp.build().writeDelimitedTo(outStream);
+            Response.Builder protoResp = Response.newBuilder().setType(Response.ResponseType.SUCCESS).setMessage("Connected to Proto Task Management Server");
+            protoResp.build().writeDelimitedTo(outStream);
+            outStream.flush();
             /////////////////////////////////////////////////////////////////////////////
             // End proto welcome message
             /////////////////////////////////////////////////////////////////////////////
 
 
             // Process requests
-            String request;
-            while (true) {
-                request = in.readLine(); // Read as String JSON, not Proto yet.
+            // String request;
+            while (true) 
+            {
+                // request = in.readLine(); // Read as String JSON, not Proto yet.
                 // You may skip error handling here to focus on Proto conversion.
                 // This may fail if the request is malformed or missing expected fields, which is ok this time.
 
@@ -75,33 +80,49 @@ public class Performer {
                 // That is fine, just do not call these requests until converted.
                 // I recommend starting with the "add" request.
 
-                System.out.println(request);
-                JSONObject requestJSON = new JSONObject(request);
-                String type = requestJSON.getString("type");
+                // System.out.println(request);
+                // JSONObject requestJSON = new JSONObject(request);
+                // String type = requestJSON.getString("type");
 
-                JSONObject responseJSON;
-                System.out.println(type);
-                switch (type) {
-                    case "add":
-                        responseJSON = handleAdd(requestJSON); // Hint: This will need to be changed to return ProtoRes and get ProtReq
-                        break;
-                    case "list":
-                        responseJSON = handleList(requestJSON);
-                        break;
-                    case "finish":
-                        responseJSON = handleFinish(requestJSON);
-                        break;
-                    case "quit":
-                        responseJSON = handleQuit();
-                        break;
-                    default:
-                        responseJSON = JsonUtils.createErrorResponse(type, "Unknown request type: " + type);
+                // JSONObject responseJSON;
+                // System.out.println(type);
+
+
+                // request null if client closed connection
+                Request protoReq = Request.parseDelimitedFrom(inStream);
+                if (protoReq == null)
+                {
+                    System.out.println("Client closed connection.");
+                    break;
                 }
 
-                out.println(responseJSON.toString());
+                Request.RequestType type = protoReq.getType();
+                System.out.println("Request type: " + type);
+
+                switch (type) 
+                {
+                    case ADD:
+                        protoResp = handleAdd(protoReq); // Hint: This will need to be changed to return ProtoRes and get ProtReq
+                        break;
+                    case LIST:
+                        protoResp = handleList(protoReq);
+                        break;
+                    case FINISH:
+                        protoResp = handleFinish(protoReq);
+                        break;
+                    case QUIT:
+                        protoResp = handleQuit();
+                        break;
+                    default:
+                        protoResp = Response.newBuilder().setType(Response.ResponseType.ERROR).setMessage("Unknown request type: " + type);
+                }
+
+                protoResp.build().writeDelimitedTo(outStream);
+                outStream.flush();
 
                 // If quit, break the loop
-                if (responseJSON.has("type") && responseJSON.getString("type").equals("quit")) {
+                if (type == Request.RequestType.QUIT) 
+                {
                     break;
                 }
             }
@@ -110,7 +131,18 @@ public class Performer {
         }
     }
 
-    private JSONObject handleAdd(JSONObject request) {
+
+    /**
+     * Convert a Task to TaskProto
+     */
+    private TaskProto taskToProto(Task task)
+    {
+        return TaskProto.newBuilder().setId(task.getId()).setDescription(task.getDescription()).setCategory(task.getCategory()).setFinished(task.isFinished()).build();
+    }
+
+
+    private Response.Builder handleAdd(Request protoReq) 
+    {
         // Validation is not required so that you can focus on Proto conversion.
         // These comments show what production-style validation would look like. You can also delete all these
         // if they annoy you since it makes it harder to read.
@@ -123,8 +155,10 @@ public class Performer {
 //            return JsonUtils.createErrorResponse("add", "Missing 'category' field");
 //        }
 
-        String description = request.getString("description");
-        String category = request.getString("category");
+        String description = protoReq.getDescription();
+        String category = protoReq.getCategory();
+        Task task = taskList.addTask(description, category);
+        return Response.newBuilder().setType(Response.ResponseType.SUCCESS).setMessage("Task added successfully").setTask(taskToProto(task));
 
 //        // Validate description not empty
 //        if (description.trim().isEmpty()) {
