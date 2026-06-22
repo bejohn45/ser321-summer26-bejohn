@@ -17,17 +17,19 @@ import taskone.proto.TaskProto;
  *
  * TODO Use this as an example when you create PerformerProto.Java
  */
-public class Performer {
+public class Performer 
+{
     private final Socket clientSocket;
     private final TaskList taskList;
 
     private InputStream inStream; // For proto
     private OutputStream outStream; // For proto
 
-    private BufferedReader in; // For JSON
-    private PrintWriter out; // For JSON
+    // private BufferedReader in; // For JSON
+    // private PrintWriter out; // For JSON
 
-    public Performer(Socket clientSocket, TaskList taskList) {
+    public Performer(Socket clientSocket, TaskList taskList) 
+    {
         this.clientSocket = clientSocket;
         this.taskList = taskList;
     }
@@ -36,8 +38,10 @@ public class Performer {
      * Main method to process client requests.
      * Reads requests, processes them, and sends responses.
      */
-    public void doPerform() {
-        try {
+    public void doPerform() 
+    {
+        try 
+        {
             inStream = clientSocket.getInputStream();
             outStream = clientSocket.getOutputStream();
             // in = new BufferedReader(new InputStreamReader(inStream));
@@ -126,7 +130,9 @@ public class Performer {
                     break;
                 }
             }
-        } catch (IOException e) {
+        } 
+        catch (IOException e) 
+        {
             System.err.println("Error handling client: " + e.getMessage());
         }
     }
@@ -141,6 +147,9 @@ public class Performer {
     }
 
 
+    /**
+     * Handle add request
+     */
     private Response.Builder handleAdd(Request protoReq) 
     {
         // Validation is not required so that you can focus on Proto conversion.
@@ -170,19 +179,28 @@ public class Performer {
 //            return JsonUtils.createErrorResponse("add", "Invalid category value. Must be 'work', 'personal', 'school', or 'other'");
 //        }
 
-        // Add task
-        Task task = taskList.addTask(description, category); // You may assume valid input for this starter version.
+        // // Add task
+        // Task task = taskList.addTask(description, category); // You may assume valid input for this starter version.
 
-        // Return success response with created task
-        return JsonUtils.createSuccessResponse("add", JsonUtils.taskToJson(task));
+        // // Return success response with created task
+        // return JsonUtils.createSuccessResponse("add", JsonUtils.taskToJson(task));
     }
 
-    private JSONObject handleList(JSONObject request) {
+    /**
+     * Handle list request with all, pending, or finished filter
+     */
+    private Response.Builder handleList(Request protoReq) 
+    {
         // Get filter (defaults to "all")
-        String filter = request.optString("filter", "all");
+        String filter = protoReq.getFilter();
+        if ((filter == null) || filter.isEmpty()) 
+        {
+            filter = "all";
+        }
 
         List<Task> tasks;
-        switch (filter) {
+        switch (filter) 
+        {
             case "all":
                 tasks = taskList.listAllTasks();
                 break;
@@ -193,42 +211,73 @@ public class Performer {
                 tasks = taskList.listFinishedTasks();
                 break;
             default:
-                return JsonUtils.createErrorResponse("list", "Invalid filter value. Must be 'all', 'pending', or 'finished'"); // Keep similar error semantics in Proto.
+                // return JsonUtils.createErrorResponse("list", "Invalid filter value. Must be 'all', 'pending', or 'finished'"); // Keep similar error semantics in Proto.
+                return Response.newBuilder().setType(Response.ResponseType.ERROR).setMessage("Invalid filter value. Must be 'all', 'pending', or 'finished'");
         }
 
         // Converts tasks to JSON array
-        JSONArray taskArray = new JSONArray();
-        for (Task task : tasks) {
-            taskArray.put(JsonUtils.taskToJson(task));
+        // JSONArray taskArray = new JSONArray();
+        // for (Task task : tasks) {
+        //     taskArray.put(JsonUtils.taskToJson(task));
+        // }
+
+        // create response
+        Response.Builder protoResp = Response.newBuilder().setType(Response.ResponseType.SUCCESS).setMessage(filter.toUpperCase() + " tasks").setCount(tasks.size());
+        // add tasks to proto response
+        for (Task task : tasks) 
+        {
+            protoResp.addTasks(taskToProto(task));
         }
+
+        return protoResp;
 
         // Creates response data
-        JSONObject data = new JSONObject();
-        data.put("tasks", taskArray);
-        data.put("count", tasks.size());
+        // JSONObject data = new JSONObject();
+        // data.put("tasks", taskArray);
+        // data.put("count", tasks.size());
 
-        return JsonUtils.createSuccessResponse("list", data);
+        // return JsonUtils.createSuccessResponse("list", data);
     }
 
-    private JSONObject handleFinish(JSONObject request) {
+    /**
+     * Handle finish request
+     */
+    private Response.Builder handleFinish(Request protoReq) 
+    {
         // Validation intentionally skipped.
 
-        int id = request.getInt("id");
-        // Mark task as finished
-        boolean success = taskList.finishTask(id);
+        // int id = request.getInt("id");
+        // // Mark task as finished
+        // boolean success = taskList.finishTask(id);
 
-        if (success) {
-            JSONObject data = new JSONObject();
-            data.put("message", "Task #" + id + " marked as finished");
-            return JsonUtils.createSuccessResponse("finish", data);
-        } else {
-            return JsonUtils.createErrorResponse("finish", "Task not found with ID: " + id);
+        // if (success) {
+        //     JSONObject data = new JSONObject();
+        //     data.put("message", "Task #" + id + " marked as finished");
+        //     return JsonUtils.createSuccessResponse("finish", data);
+        // } else {
+        //     return JsonUtils.createErrorResponse("finish", "Task not found with ID: " + id);
+        // }
+
+        // finish task with id
+        int id = protoReq.getId();
+        boolean success = taskList.finishTask(id);
+        // if success return success response
+        if (success)
+        {
+            return Response.newBuilder().setType(Response.ResponseType.SUCCESS).setMessage("Task #" + id + " marked as finished");
+        } 
+        else 
+        {
+            return Response.newBuilder().setType(Response.ResponseType.ERROR).setMessage("Task not found with ID: " + id);
         }
+
     }
 
-    private JSONObject handleQuit() {
-        JSONObject data = new JSONObject();
-        data.put("message", "Goodbye!");
-        return JsonUtils.createSuccessResponse("quit", data);
+    /**
+     * Handle quit request
+     */
+    private Response.Builder handleQuit() 
+    {
+        return Response.newBuilder().setType(Response.ResponseType.SUCCESS).setMessage("Quitting now, goodbye!");
     }
 }
