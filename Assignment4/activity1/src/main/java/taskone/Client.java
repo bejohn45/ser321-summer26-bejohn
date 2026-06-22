@@ -3,6 +3,7 @@ package taskone;
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.List;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -160,7 +161,7 @@ public class Client
     /**
      * Add a new task.
      *
-     * TODO Convert to Protobuf
+     * Converted to Protobuf
      */
     private static void addTask() 
     {
@@ -234,9 +235,10 @@ public class Client
     /**
      * List tasks with filter options.
      *
-     * TODO Convert to Protobuf
+     * Converted to Protobuf
      */
-    private static void listAllTasks() {
+    private static void listAllTasks() 
+    {
         System.out.println("\n--- List Tasks ---");
         System.out.println("1. All tasks");
         System.out.println("2. Pending tasks");
@@ -246,7 +248,8 @@ public class Client
         int choice = getMenuChoice();
         String filter;
 
-        switch (choice) {
+        switch (choice) 
+        {
             case 1:
                 filter = "all";
                 break;
@@ -262,34 +265,63 @@ public class Client
         }
 
         // Create request in JSON (convert this to Proto)
-        JSONObject request = new JSONObject();
-        request.put("type", "list");
-        request.put("filter", filter);
+        // JSONObject request = new JSONObject();
+        // request.put("type", "list");
+        // request.put("filter", filter);
+        Request request = Request.newBuilder().setType(Request.RequestType.LIST).setFilter(filter).build();
 
         // Send request and get response
-        JSONObject response = sendRequest(request); // Same conversion approach as in addTask().
+        // JSONObject response = sendRequest(request); // Same conversion approach as in addTask().
+        Response response = sendRequest(request);
 
         // handle response
-        if (response != null) {
-            if (response.getBoolean("ok")) {
-                JSONObject data = response.getJSONObject("data");
-                JSONArray tasks = data.getJSONArray("tasks");
-                int count = data.getInt("count");
+        // if (response != null) {
+        //     if (response.getBoolean("ok")) {
+        //         JSONObject data = response.getJSONObject("data");
+        //         JSONArray tasks = data.getJSONArray("tasks");
+        //         int count = data.getInt("count");
 
+        //         System.out.println("\n" + filter.toUpperCase() + " TASKS (" + count + "):");
+        //         System.out.println("─────────────────────────────────────────────────");
+
+        //         if (count == 0) {
+        //             System.out.println("No tasks found.");
+        //         } else {
+        //             for (int i = 0; i < tasks.length(); i++) {
+        //                 JSONObject task = tasks.getJSONObject(i);
+        //                 System.out.println(formatTask(task));
+        //             }
+        //         }
+        //     } else {
+        //         JSONObject error = response.getJSONObject("data");
+        //         System.out.println("Error: " + error.getString("error"));
+        //     }
+        // }
+        if (response != null)
+        {
+            if (response.getType() == Response.ResponseType.SUCCESS)
+            {
+                // get list of tasks from response
+                List<TaskProto> tasks = response.getTasksList();
+                int count = tasks.size();
                 System.out.println("\n" + filter.toUpperCase() + " TASKS (" + count + "):");
                 System.out.println("─────────────────────────────────────────────────");
-
-                if (count == 0) {
+                // if no tasks found
+                if (count == 0)
+                {
                     System.out.println("No tasks found.");
-                } else {
-                    for (int i = 0; i < tasks.length(); i++) {
-                        JSONObject task = tasks.getJSONObject(i);
+                }
+                else
+                {
+                    for (TaskProto task : tasks)
+                    {
                         System.out.println(formatTask(task));
                     }
                 }
-            } else {
-                JSONObject error = response.getJSONObject("data");
-                System.out.println("Error: " + error.getString("error"));
+            }
+            else
+            {
+                System.out.println("Error: " + response.getMessage());
             }
         }
     }
@@ -388,15 +420,22 @@ public class Client
     /**
      * Format a task for display.
      */
-    private static String formatTask(JSONObject task) {
-        int id = task.getInt("id");
-        String description = task.getString("description");
-        String category = task.getString("category");
-        boolean finished = task.getBoolean("finished");
+    private static String formatTask(TaskProto task) 
+    {
+        // int id = task.getInt("id");
+        // String description = task.getString("description");
+        // String category = task.getString("category");
+        // boolean finished = task.getBoolean("finished");
+        int id = task.getId();
+        String description = task.getDescription();
+        String category = task.getCategory();
+        boolean finished = task.getFinished();
 
+        // find status and category tag
         String status = finished ? "[DONE]" : "[PENDING]";
         String categoryTag;
-        switch (category) {
+        switch (category) 
+        {
             case "work":
                 categoryTag = "[WORK]";
                 break;
