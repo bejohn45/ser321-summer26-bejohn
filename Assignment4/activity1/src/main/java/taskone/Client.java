@@ -7,40 +7,50 @@ import java.util.Scanner;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import taskone.proto.Response;
+import taskone.proto.Request;
+import taskone.proto.TaskProto;
 
 /**
  * Task Management Client.
  * Provides a menu-based interface to interact with the task server.
  * You will need to edit this when you change it to proto
  */
-public class Client {
+public class Client 
+{
     private static Socket socket;
 
     private static InputStream inStream; // For proto
     private static OutputStream outStream; // For proto
-    private static BufferedReader in; // For JSON
-    private static PrintWriter out; // For JSON
+    // private static BufferedReader in; // For JSON
+    // private static PrintWriter out; // For JSON
     private static Scanner scanner;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) 
+    {
         String host = "localhost";
         int port = 8888;
 
         // Parse command line arguments
-        if (args.length > 0) {
+        if (args.length > 0) 
+        {
             host = args[0];
         }
-        if (args.length > 1) {
-            try {
+        if (args.length > 1) 
+        {
+            try 
+            {
                 port = Integer.parseInt(args[1]);
-            } catch (NumberFormatException e) {
+            } 
+            catch (NumberFormatException e) 
+            {
                 System.err.println("Invalid port number. Using default: 8888");
             }
         }
 
         scanner = new Scanner(System.in);
 
-        try {
+        try 
+        {
             // Connect to server
             System.out.println("Trying to connect to Task Management Server at " + host + ":" + port);
             socket = new Socket(host, port);
@@ -50,8 +60,8 @@ public class Client {
             outStream = socket.getOutputStream();
 
             // JSON uses these wrappers.
-            in = new BufferedReader(new InputStreamReader(inStream));
-            out = new PrintWriter(outStream, true);
+            // in = new BufferedReader(new InputStreamReader(inStream));
+            // out = new PrintWriter(outStream, true);
 
             // Use either JSON or Proto from the examples below.
             // Ensure you make matching changes in Performer.java.
@@ -59,14 +69,14 @@ public class Client {
             /////////////////////////////////////////////////////////////////////////////
             // Welcome JSON
             /////////////////////////////////////////////////////////////////////////////
-            String welcomeMsg = in.readLine();
-            if (welcomeMsg != null) {
-                JSONObject welcomeMessage = new JSONObject(welcomeMsg);
-                System.out.println(welcomeMessage);
-                if (welcomeMessage.getBoolean("ok")) {
-                    System.out.println(welcomeMessage.getString("data"));
-                }
-            }
+            // String welcomeMsg = in.readLine();
+            // if (welcomeMsg != null) {
+            //     JSONObject welcomeMessage = new JSONObject(welcomeMsg);
+            //     System.out.println(welcomeMessage);
+            //     if (welcomeMessage.getBoolean("ok")) {
+            //         System.out.println(welcomeMessage.getString("data"));
+            //     }
+            // }
             /////////////////////////////////////////////////////////////////////////////
             // End Welcome JSON
             /////////////////////////////////////////////////////////////////////////////
@@ -74,19 +84,21 @@ public class Client {
             /////////////////////////////////////////////////////////////////////////////
             // Welcome Proto
             /////////////////////////////////////////////////////////////////////////////
-//            Response response = Response.parseDelimitedFrom(inStream);
-//            System.out.println(response.getMessage());
+            Response response = Response.parseDelimitedFrom(inStream);
+            System.out.println(response.getMessage());
             /////////////////////////////////////////////////////////////////////////////
             // End Welcome Proto
             /////////////////////////////////////////////////////////////////////////////
 
             // Main menu loop
             boolean running = true;
-            while (running) {
+            while (running) 
+            {
                 displayMenu();
                 int choice = getMenuChoice();
 
-                switch (choice) {
+                switch (choice) 
+                {
                     case 1:
                         addTask();
                         break;
@@ -105,9 +117,13 @@ public class Client {
                 }
             }
 
-        } catch (IOException e) {
+        } 
+        catch (IOException e) 
+        {
             System.err.println("Connection error: " + e.getMessage());
-        } finally {
+        } 
+        finally 
+        {
             cleanup();
         }
     }
@@ -115,7 +131,8 @@ public class Client {
     /**
      * Display the main menu.
      */
-    private static void displayMenu() {
+    private static void displayMenu() 
+    {
         System.out.println("\n========== Task Management Menu ==========");
         System.out.println("1. Add Task");
         System.out.println("2. List Tasks");
@@ -128,10 +145,14 @@ public class Client {
     /**
      * Get user's menu choice.
      */
-    private static int getMenuChoice() {
-        try {
+    private static int getMenuChoice() 
+    {
+        try 
+        {
             return Integer.parseInt(scanner.nextLine().trim());
-        } catch (NumberFormatException e) {
+        } 
+        catch (NumberFormatException e) 
+        {
             return -1;
         }
     }
@@ -141,12 +162,14 @@ public class Client {
      *
      * TODO Convert to Protobuf
      */
-    private static void addTask() {
+    private static void addTask() 
+    {
         System.out.println("\n--- Add Task ---");
         System.out.print("Enter task description: ");
         String description = scanner.nextLine().trim();
 
-        if (description.isEmpty()) {
+        if (description.isEmpty()) 
+        {
             System.out.println("Error: Description cannot be empty");
             return;
         }
@@ -154,39 +177,58 @@ public class Client {
         System.out.print("Enter category (work/personal/school/other): ");
         String category = scanner.nextLine().trim().toLowerCase();
 
-        if (!category.equals("work") && !category.equals("personal") && !category.equals("school") && !category.equals("other")) {
+        if (!category.equals("work") && !category.equals("personal") && !category.equals("school") && !category.equals("other")) 
+        {
             System.out.println("Error: Invalid category. Must be 'work', 'personal', 'school', or 'other'");
             return;
         }
 
         // Create request (convert this to Proto)
-        JSONObject request = new JSONObject();
-        request.put("type", "add");
-        request.put("description", description);
-        request.put("category", category);
+        // JSONObject request = new JSONObject();
+        // request.put("type", "add");
+        // request.put("description", description);
+        // request.put("category", category);
+        Request request = Request.newBuilder().setType(Request.RequestType.ADD).setDescription(description).setCategory(category).build();
 
         // Send request and get response
-        JSONObject response = sendRequest(request); // Replace this with the following example Proto code block
+        // JSONObject response = sendRequest(request); // Replace this with the following example Proto code block
 
         // Example Protobuf code:
         // request.writeDelimitedTo(outStream);                         // where request is a Request proto
         // Response response = Response.parseDelimitedFrom(inStream);   // Read response as Proto
+        
+        // send request
+        Response response = sendRequest(request);
 
         // Parse the Proto response here.
-
-
-        if (response != null) {
-            if (response.getBoolean("ok")) {
-                JSONObject taskData = response.getJSONObject("data");
+        // if (response != null) {
+        //     if (response.getBoolean("ok")) {
+        //         JSONObject taskData = response.getJSONObject("data");
+        //         System.out.println("Task added successfully!");
+        //         System.out.println("  ID: " + taskData.getInt("id"));
+        //         System.out.println("  Description: " + taskData.getString("description"));
+        //         System.out.println("  Category: " + taskData.getString("category"));
+        //     } else {
+        //         JSONObject error = response.getJSONObject("data");
+        //         System.out.println("Error: " + error.getString("error"));
+        //     }
+        // }
+        if (response != null)
+        {
+            if (response.getType() == Response.ResponseType.SUCCESS) 
+            {
+                TaskProto taskData = response.getTask();
                 System.out.println("Task added successfully!");
-                System.out.println("  ID: " + taskData.getInt("id"));
-                System.out.println("  Description: " + taskData.getString("description"));
-                System.out.println("  Category: " + taskData.getString("category"));
-            } else {
-                JSONObject error = response.getJSONObject("data");
-                System.out.println("Error: " + error.getString("error"));
+                System.out.println("  ID: " + taskData.getId());
+                System.out.println("  Description: " + taskData.getDescription());
+                System.out.println("  Category: " + taskData.getCategory());
+            } 
+            else
+            {
+                System.out.println("Error: " + response.getMessage());
             }
         }
+
     }
 
     /**
@@ -310,22 +352,34 @@ public class Client {
     /**
      * Send a request to the server and receive response.
      *
-     * TODO Convert to Protobuf
+     * Converted to Protobuf
      */
-    private static JSONObject sendRequest(JSONObject request) {
-        try {
-            // Send request
-            out.println(request.toString());
+    private static Response sendRequest(Request request) 
+    {
+        // try {
+        //     // Send request
+        //     out.println(request.toString());
 
-            // Receive response
-            String responseLine = in.readLine();
-            if (responseLine != null) {
-                return new JSONObject(responseLine);
-            } else {
-                System.out.println("Error: No response from server");
-                return null;
-            }
-        } catch (IOException e) {
+        //     // Receive response
+        //     String responseLine = in.readLine();
+        //     if (responseLine != null) {
+        //         return new JSONObject(responseLine);
+        //     } else {
+        //         System.out.println("Error: No response from server");
+        //         return null;
+        //     }
+        // } catch (IOException e) {
+        //     System.out.println("Error communicating with server: " + e.getMessage());
+        //     return null;
+        // }
+        try 
+        {
+            request.writeDelimitedTo(outStream);
+            outStream.flush();
+            return Response.parseDelimitedFrom(inStream);
+        }
+        catch (IOException e) 
+        {
             System.out.println("Error communicating with server: " + e.getMessage());
             return null;
         }
