@@ -56,6 +56,21 @@ task runServer(type: JavaExec) {
     }
 }
 
+// Task to run the multi-threaded server
+task runThreadedServer(type: JavaExec) {
+    group = 'application'
+    description = 'Run the Multi-Threaded Task Management Server'
+    mainClass = 'taskone.ThreadedServer'
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+
+    // Allow passing port as argument
+    if (project.hasProperty('port')) 
+    {
+        args project.property('port')
+    }
+}
+
 // Task to run the client
 task runClient(type: JavaExec) {
     group = 'application'

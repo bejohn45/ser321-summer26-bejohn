@@ -71,7 +71,7 @@ public class ThreadedServer
             }
         }
 
-        System.out.println("ThreadedTask Management Server starting on port " + port);
+        System.out.println("Multi-Threaded Task Management Server starting on port " + port);
         System.out.println("Waiting for clients...");
 
         try (ServerSocket serverSocket = new ServerSocket(port)) 
