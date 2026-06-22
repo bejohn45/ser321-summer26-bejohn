@@ -9,11 +9,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * TODO Modify as required for Part C.
  */
-public class TaskList {
+public class TaskList 
+{
     private final List<Task> tasks;
     private final AtomicInteger nextId;
 
-    public TaskList() {
+    public TaskList() 
+    {
         this.tasks = new ArrayList<>();
         this.nextId = new AtomicInteger(1);
     }
@@ -24,7 +26,8 @@ public class TaskList {
      * @param category Task category (work, personal, school, other)
      * @return The created Task object
      */
-    public Task addTask(String description, String category) {
+    public synchronized Task addTask(String description, String category) 
+    {
         Task task = new Task(nextId.getAndIncrement(), description, category);
         tasks.add(task);
         return task;
@@ -34,7 +37,8 @@ public class TaskList {
      * Get all tasks.
      * @return Copy of task list
      */
-    public List<Task> listAllTasks() {
+    public synchronized List<Task> listAllTasks() 
+    {
         return new ArrayList<>(tasks);
     }
 
@@ -42,10 +46,13 @@ public class TaskList {
      * Get pending (incomplete) tasks.
      * @return List of pending tasks
      */
-    public List<Task> listPendingTasks() {
+    public synchronized List<Task> listPendingTasks() 
+    {
         List<Task> pending = new ArrayList<>();
-        for (Task task : tasks) {
-            if (!task.isFinished()) {
+        for (Task task : tasks) 
+        {
+            if (!task.isFinished()) 
+            {
                 pending.add(task);
             }
         }
@@ -56,10 +63,13 @@ public class TaskList {
      * Get finished tasks.
      * @return List of finished tasks
      */
-    public List<Task> listFinishedTasks() {
+    public synchronized List<Task> listFinishedTasks() 
+    {
         List<Task> finished = new ArrayList<>();
-        for (Task task : tasks) {
-            if (task.isFinished()) {
+        for (Task task : tasks) 
+        {
+            if (task.isFinished()) 
+            {
                 finished.add(task);
             }
         }
@@ -71,9 +81,12 @@ public class TaskList {
      * @param id Task ID
      * @return Task object or null if not found
      */
-    public Task findTaskById(int id) {
-        for (Task task : tasks) {
-            if (task.getId() == id) {
+    public synchronized Task findTaskById(int id) 
+    {
+        for (Task task : tasks) 
+        {
+            if (task.getId() == id) 
+            {
                 return task;
             }
         }
@@ -85,9 +98,11 @@ public class TaskList {
      * @param id Task ID
      * @return true if successful, false if task not found
      */
-    public boolean finishTask(int id) {
+    public synchronized boolean finishTask(int id) 
+    {
         Task task = findTaskById(id);
-        if (task != null) {
+        if (task != null) 
+        {
             task.setFinished(true);
             return true;
         }
@@ -100,9 +115,11 @@ public class TaskList {
      * @param assignee Person to delegate to
      * @return true if successful, false if task not found
      */
-    public boolean delegateTask(int id, String assignee) {
+    public synchronized boolean delegateTask(int id, String assignee) 
+    {
         Task task = findTaskById(id);
-        if (task != null) {
+        if (task != null) 
+        {
             task.setAssignee(assignee);
             return true;
         }
@@ -114,9 +131,11 @@ public class TaskList {
      * @param id Task ID
      * @return true if successful, false if task not found
      */
-    public boolean deleteTask(int id) {
+    public synchronized boolean deleteTask(int id) 
+    {
         Task task = findTaskById(id);
-        if (task != null) {
+        if (task != null) 
+        {
             tasks.remove(task);
             return true;
         }
@@ -127,7 +146,8 @@ public class TaskList {
      * Get count of tasks.
      * @return Number of tasks
      */
-    public int getTaskCount() {
+    public synchronized int getTaskCount() 
+    {
         return tasks.size();
     }
 }
