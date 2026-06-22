@@ -329,34 +329,50 @@ public class Client
     /**
      * Mark a task as finished.
      *
-     * TODO Convert to Protobuf
+     * Converted to Protobuf
      */
     private static void finishTask() {
         System.out.println("\n--- Finish Task ---");
         System.out.print("Enter task ID to finish: ");
 
         int id;
-        try {
+        try 
+        {
             id = Integer.parseInt(scanner.nextLine().trim());
-        } catch (NumberFormatException e) {
+        } 
+        catch (NumberFormatException e) 
+        {
             System.out.println("Error: Invalid task ID");
             return;
         }
 
         // Create request
-        JSONObject request = new JSONObject();
-        request.put("type", "finish");
-        request.put("id", id);
+        // JSONObject request = new JSONObject();
+        // request.put("type", "finish");
+        // request.put("id", id);
+        Request request = Request.newBuilder().setType(Request.RequestType.FINISH).setId(id).build();
 
-        // Send request and get response
-        JSONObject response = sendRequest(request);
-        if (response != null) {
-            if (response.getBoolean("ok")) {
-                JSONObject data = response.getJSONObject("data");
-                System.out.println(data.getString("message"));
-            } else {
-                JSONObject error = response.getJSONObject("data");
-                System.out.println("Error: " + error.getString("error"));
+        // // Send request and get response
+        // JSONObject response = sendRequest(request);
+        // if (response != null) {
+        //     if (response.getBoolean("ok")) {
+        //         JSONObject data = response.getJSONObject("data");
+        //         System.out.println(data.getString("message"));
+        //     } else {
+        //         JSONObject error = response.getJSONObject("data");
+        //         System.out.println("Error: " + error.getString("error"));
+        //     }
+        // }
+        Response response = sendRequest(request);
+        if (response != null)
+        {
+            if (response.getType() == Response.ResponseType.SUCCESS)
+            {
+                System.out.println(response.getMessage());
+            }
+            else
+            {
+                System.out.println("Error: " + response.getMessage());
             }
         }
     }
@@ -364,20 +380,27 @@ public class Client
     /**
      * Quit the application.
      *
-     * TODO Convert to Protobuf
+     * Converted to Protobuf
      */
-    private static void quit() {
+    private static void quit() 
+    {
         System.out.println("\n--- Quitting ---");
 
         // Create request
-        JSONObject request = new JSONObject();
-        request.put("type", "quit");
+        // JSONObject request = new JSONObject();
+        // request.put("type", "quit");
+        Request request = Request.newBuilder().setType(Request.RequestType.QUIT).build();
 
         // Send request and get response
-        JSONObject response = sendRequest(request);
-        if (response != null && response.getBoolean("ok")) {
-            JSONObject data = response.getJSONObject("data");
-            System.out.println(data.getString("message"));
+        // JSONObject response = sendRequest(request);
+        // if (response != null && response.getBoolean("ok")) {
+        //     JSONObject data = response.getJSONObject("data");
+        //     System.out.println(data.getString("message"));
+        // }
+        Response response = sendRequest(request);
+        if ((response != null) && response.getType() == Response.ResponseType.SUCCESS)
+        {
+            System.out.println(response.getMessage());
         }
     }
 
@@ -457,21 +480,45 @@ public class Client
     /**
      * Clean up resources.
      */
-    private static void cleanup() {
-        try {
-            if (scanner != null) {
+    private static void cleanup() 
+    {
+        // try {
+        //     if (scanner != null) {
+        //         scanner.close();
+        //     }
+        //     if (in != null) {
+        //         in.close();
+        //     }
+        //     if (out != null) {
+        //         out.close();
+        //     }
+        //     if (socket != null && !socket.isClosed()) {
+        //         socket.close();
+        //     }
+        // } catch (IOException e) {
+        //     System.err.println("Error closing resources: " + e.getMessage());
+        // }
+        try
+        {
+            if (scanner != null) 
+            {
                 scanner.close();
             }
-            if (in != null) {
-                in.close();
+            if (inStream != null) 
+            {
+                inStream.close();
             }
-            if (out != null) {
-                out.close();
+            if (outStream != null) 
+            {
+                outStream.close();
             }
-            if (socket != null && !socket.isClosed()) {
+            if (socket != null && !socket.isClosed()) 
+            {
                 socket.close();
             }
-        } catch (IOException e) {
+        } 
+        catch (IOException e) 
+        {
             System.err.println("Error closing resources: " + e.getMessage());
         }
     }
