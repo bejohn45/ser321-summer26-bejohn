@@ -44,7 +44,7 @@ message Request {
   string category = 3;
 
   // LIST
-  string filter;
+  string filter = 4;
 
   // FINISH
   int32 id = 5;
