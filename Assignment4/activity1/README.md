@@ -39,14 +39,22 @@ gradle generateProto
 ```
 
 **Start the server:**
-
+Single thread:
 ```bash
 gradle runServer
 # Or with custom port:
 gradle runServer -Pport=9000
 ```
 
-**Start the client (in a new terminal):**
+Multi-threaded:
+```bash
+gradle runThreadedServer
+# Or with custom port:
+gradle runThreadedServer -Pport=9000
+```
+
+
+**Start one or more clients (each in a new terminal):**
 ```bash
 gradle runClient
 # Or with custom host/port:
@@ -60,118 +68,162 @@ Try the operations:
 4. Quit
 5. Try running multiple clients - only one works at a time (single-threaded!)
 
-## Current Protocol (JSON)
+## Current Protocol (Protocol Buffers)
 
-The server currently uses a JSON-based protocol:
+The server currently uses a Protocol Buffer protocol:
 
-### Request Format
-```json
+### Message Format
+
+**Request:**
+```proto
 {
-  "type": "add|list|finish|quit",
-  ... other fields depending on type
+  enum RequestType {
+    UNKNOWN = 0;
+    ADD = 1;
+    LIST = 2;
+    FINISH = 3;
+    QUIT = 4;
+
+  }
+  RequestType type = 1;
+
+  // ADD
+  string description = 2;
+  string category = 3;
+
+  // LIST
+  string filter = 4;
+
+  // FINISH
+  int32 id = 5;
+}
+```
+
+**Response:**
+```proto
+{
+  enum ResponseType {
+    UNKNOWN = 0;
+    SUCCESS = 1;
+    ERROR = 2;
+  }
+
+  ResponseType type = 1;
+  string message = 2;
+
+  // ADD
+  TaskProto task = 3;
+
+  // LIST
+  repeated TaskProto tasks = 4;
+  int32 count = 5;
+}
+```
+
+**TaskProto Message:**
+```proto
+{
+  int32 id = 1;
+  string description = 2;
+  string category = 3;
+  bool finished = 4;
 }
 ```
 
 ### Add Task
 **Request:**
-```json
+```proto
 {
-  "type": "add",
-  "description": "Implement Protobuf protocol",
-  "category": "school"
+  type : ADD
+  description : "HW"
+  category : "school"
 }
 ```
 
 **Success Response:**
-```json
+```proto
 {
-  "ok": true,
-  "type": "add",
-  "data": {
-    "id": 1,
-    "description": "Implement Protobuf protocol",
-    "category": "school",
-    "finished": false
+  type : SUCCESS
+  message = "Task added successfully"
+  task {
+    id : 1
+    description : "HW"
+    category : "school"
+    finished : false
   }
 }
 ```
 
 **Error Response:**
-```json
+```proto
 {
-  "ok": false,
-  "type": "add",
-  "data": {
-    "error": "Missing 'description' field"
-  }
+  type : ERROR
+  message : "Invalid category value. Must be 'work', 'personal', 'school', or 'other'"
 }
 ```
 
 ### List Tasks
 **Request:**
-```json
+```proto
 {
-  "type": "list",
-  "filter": "all"
+  type : LIST
+  filter : "all"
 }
 ```
 - `filter` can be: "all", "pending", or "finished" (optional, defaults to "all")
 
 **Success Response:**
-```json
+```proto
 {
-  "ok": true,
-  "type": "list",
-  "data": {
-    "tasks": [
-      {
-        "id": 1,
-        "description": "Implement Protobuf protocol",
-        "category": "school",
-        "finished": false
-      },
-      ...
-    ],
-    "count": 5
+  type : SUCCESS
+  message : "ALL tasks"
+  tasks {
+    id : 1
+    description : "HW"
+    category : "school"
+    finished : true
   }
+  count : 1
 }
 ```
 
 ### Finish Task
 **Request:**
-```json
+```proto
 {
-  "type": "finish",
-  "id": 1
+  type : FINISH
+  id : 1
 }
 ```
 
 **Success Response:**
-```json
+```proto
 {
-  "ok": true,
-  "type": "finish",
-  "data": {
-    "message": "Task #1 marked as finished"
-  }
+  type : SUCCESS
+  message : "Task #1 marked as finished"
+}
+```
+
+**Error Response:**
+```proto
+{
+  type : ERROR
+  message : "Task not found with ID: 1"
 }
 ```
 
 ### Quit
 **Request:**
-```json
+```proto
 {
-  "type": "quit"
+  type : QUIT
 }
 ```
 
 **Success Response:**
-```json
+```proto
 {
-  "ok": true,
-  "type": "quit",
-  "data": {
-    "message": "Goodbye!"
-  }
+  type : SUCCESS
+  messgage : "Quitting now, goodbye!"
 }
 ```
