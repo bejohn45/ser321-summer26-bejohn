@@ -180,6 +180,17 @@ public class AuctionServer
                             response = buildGameJoined(gameState);
                         }
                         break;
+                    case BID:
+                        // check if player not in game
+                        if (gameState == null)
+                        {
+                            response = buildError("You are not in a game!");
+                        }
+                        else
+                        {
+                            response = handleBid(request, gameState);
+                        }
+                        break;
                     case QUIT:
                         response = handleQuit(gameState);
                         if (response != null) 
@@ -245,6 +256,89 @@ public class AuctionServer
         // Add new name
         activePlayerNames.add(name);
         return new String[]{name, null};
+    }
+
+    /**
+     * Handle BID request 
+     */
+    private static Response handleBid(Request request, PlayerGameState gameState)
+    {
+        int itemId = request.getItemId();
+        int bidAmount = request.getBidAmount();
+
+        // validate bid request
+        String validationError = gameState.validateBid(itemId, bidAmount);
+        if (validationError != null) 
+        {
+            return buildError(validationError);
+        }
+
+        // find current item and reserve price
+        Item currentItem = gameState.getCurrentItem();
+        int reservePrice = currentItem.getMinValue() / 2;
+
+        // decide bids
+        int playerBid = (bidAmount == -1) ? 0 : bidAmount;
+        int bot1Bid = gameState.getBot1().decideBid(currentItem, reservePrice);
+        int bot2Bid = gameState.getBot2().decideBid(currentItem, reservePrice);
+        int bot3Bid = gameState.getBot3().decideBid(currentItem, reservePrice);
+
+        // get player names and bids
+        String[] players = {gameState.getPlayerName(), gameState.getBot1().getName(), gameState.getBot2().getName(), gameState.getBot3().getName()};
+        int[] bids = {playerBid, bot1Bid, bot2Bid, bot3Bid};
+        String winner = "(unsold)";
+        int winningBid = 0;
+        for (int i=0; i<players.length; i++)
+        {
+            // check if no bids
+            if (bids[i] <= 0)
+            {
+                continue;
+            }
+            // check if bid higher than current winning bid, ties broken alphabetically by name
+            if ((bids[i] > winningBid) || ((bids[i] == winningBid) && (players[i].compareTo(winner) < 0)))
+            {
+                winningBid = bids[i];
+                winner = players[i];
+            }
+        }
+
+        // award item to winner
+        if (winner.equals(gameState.getPlayerName()))
+        {
+            gameState.awardItemToPlayer(currentItem, winningBid);
+        }
+        else if (winner.equals(gameState.getBot1().getName()))
+        {
+            gameState.getBot1().awardItem(currentItem, winningBid);
+        }
+        else if (winner.equals(gameState.getBot2().getName()))
+        {
+            gameState.getBot2().awardItem(currentItem, winningBid);
+        }
+        else if (winner.equals(gameState.getBot3().getName()))
+        {
+            gameState.getBot3().awardItem(currentItem, winningBid);
+        }
+
+        // add bids to auction result
+        List<PlayerBid> allBids = new ArrayList<>();
+        allBids.add(PlayerBid.newBuilder().setPlayerName(gameState.getPlayerName()).setBidAmount(playerBid).build());
+        allBids.add(PlayerBid.newBuilder().setPlayerName(gameState.getBot1().getName()).setBidAmount(bot1Bid).build());
+        allBids.add(PlayerBid.newBuilder().setPlayerName(gameState.getBot2().getName()).setBidAmount(bot2Bid).build());
+        allBids.add(PlayerBid.newBuilder().setPlayerName(gameState.getBot3().getName()).setBidAmount(bot3Bid).build());
+        AuctionResult result = AuctionResult.newBuilder().setItem(itemToProto(currentItem)).setActualValue(currentItem.getActualValue()).setWinnerName(winner).setWinningBid(winningBid).addAllAllBids(allBids).build();
+
+        // build response, check if more items in auction
+        boolean moreItems = gameState.moveToNextItem();
+        Response.Builder response = Response.newBuilder().setType(Response.ResponseType.BID_RESULT).setOk(true).setMessage(moreItems ? "Auction round complete!" : "Auction complete! Calculating final scores...")
+            .setResult(result).setPlayerStatus(PlayerStatus.newBuilder().setGoldRemaining(gameState.getGold()).build());
+        // if more items set next in response
+        if (moreItems)
+        {
+            response.setNextItem(itemToProto(gameState.getCurrentItem()));
+        }
+        return response.build();
     }
 
     /**
