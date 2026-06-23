@@ -202,6 +202,9 @@ public class AuctionServer
                             response = null;
                         }
                         break;
+                    case LEADERBOARD:
+                        response = buildLeaderboardResponse();
+                        break;
                     case QUIT:
                         response = handleQuit(gameState);
                         if (response != null) 
@@ -454,6 +457,18 @@ public class AuctionServer
         int rank = leaderboard.addScore(gameState.getPlayerName(), gameState.getPlayerScore());
         GameResult gameResult = GameResult.newBuilder().addAllPlayerScores(allStatuses).setWinnerName(winner).setLeaderboardPosition(rank).build();
         return Response.newBuilder().setType(Response.ResponseType.GAME_OVER).setOk(true).setMessage("Game over! Final results:").setGameResult(gameResult).build();
+    }
+
+
+    /**
+     * Helper: build leaderboard response
+     */
+    private static Response buildLeaderboardResponse()
+    {
+        // get top 10 scores, build leaderboard proto
+        List<LeaderboardEntry> topScores = leaderboard.getTopScores(10);
+        Leaderboard leaderboardProto = Leaderboard.newBuilder().addAllEntries(topScores).build();
+        return Response.newBuilder().setType(Response.ResponseType.LEADERBOARD_RESPONSE).setOk(true).setMessage("Top 10 Leaderboard").setLeaderboard(leaderboardProto).build();
     }
 
 
