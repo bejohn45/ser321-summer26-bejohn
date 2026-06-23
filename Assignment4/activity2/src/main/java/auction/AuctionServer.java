@@ -59,18 +59,26 @@ public class AuctionServer
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) 
+    {
         int port = DEFAULT_PORT;
 
         // Parse command line arguments
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("--grading")) {
+        for (int i = 0; i < args.length; i++) 
+        {
+            if (args[i].equals("--grading")) 
+            {
                 gradingMode = true;
                 System.out.println("Running in grading mode (deterministic results)");
-            } else {
-                try {
+            } 
+            else 
+            {
+                try 
+                {
                     port = Integer.parseInt(args[i]);
-                } catch (NumberFormatException e) {
+                } 
+                catch (NumberFormatException e) 
+                {
                     System.err.println("Invalid port number: " + args[i]);
                 }
             }
@@ -81,13 +89,16 @@ public class AuctionServer
         System.out.println("Leaderboard loaded with " + leaderboard.size() + " scores");
 
 
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
+        try (ServerSocket serverSocket = new ServerSocket(port)) 
+        {
             System.out.println("Auction Server started on port " + port);
             System.out.println("Waiting for connections...");
 
             int clientId = 0;
-            while (true) {
-                try {
+            while (true) 
+            {
+                try 
+                {
                     Socket clientSocket = serverSocket.accept();
                     clientId++;
                     final int id = clientId;
@@ -96,11 +107,15 @@ public class AuctionServer
                     // start new worker thread for each client
                     WorkerThread worker = new WorkerThread(clientSocket, id);
                     new Thread(worker).start();
-                } catch (IOException e) {
+                } 
+                catch (IOException e) 
+                {
                     System.err.println("Error accepting client: " + e.getMessage());
                 }
             }
-        } catch (IOException e) {
+        } 
+        catch (IOException e) 
+        {
             System.err.println("Server error: " + e.getMessage());
         }
     }
@@ -108,12 +123,14 @@ public class AuctionServer
     /**
      * Handle a client connection (runs in thread pool).
      */
-    private static void processConnection(Socket clientSocket, int clientId) {
+    private static void processConnection(Socket clientSocket, int clientId) 
+    {
         String playerName = null;
         PlayerGameState gameState = null;
 
         try (InputStream in = clientSocket.getInputStream();
-             OutputStream out = clientSocket.getOutputStream()) {
+             OutputStream out = clientSocket.getOutputStream()) 
+        {
 
             System.out.println("[Client " + clientId + "] Handler started");
 
@@ -122,27 +139,51 @@ public class AuctionServer
 
             // Read and process requests
             Request request;
-            while ((request = Request.parseDelimitedFrom(in)) != null) {
+            while ((request = Request.parseDelimitedFrom(in)) != null) 
+            {
                 Request.RequestType type = request.getType();
                 System.out.println("[Client " + clientId + "] Received: " + type);
 
                 Response response = null;
 
-                switch (type) {
+                switch (type) 
+                {
                     case REGISTER:
                         String[] result = handleRegister(request, playerName);
                         playerName = result[0];
                         String message = result[1];
-                        if (playerName != null) {
+                        if (playerName != null) 
+                        {
                             response = buildWelcome("Welcome, " + playerName + "! You have " + initialGold + " gold. " +
                                     "Type 'join' to start playing against bot opponents!");
-                        } else {
+                        } 
+                        else 
+                        {
                             response = buildError(message);
+                        }
+                        break;
+                    case JOIN:
+                        // check if player name null
+                        if (playerName == null)
+                        {
+                            response = buildError("Please set your name first!");
+                        }
+                        // check if player in game already
+                        else if (gameState != null)
+                        {
+                            response = buildError("You are already in a game!");
+                        }
+                        else
+                        {
+                            // initial state with 150 gold, 5 random items, 3 bot opponents
+                            gameState = new PlayerGameState(playerName, gradingMode);
+                            response = buildGameJoined(gameState);
                         }
                         break;
                     case QUIT:
                         response = handleQuit(gameState);
-                        if (response != null) {
+                        if (response != null) 
+                        {
                             response.writeDelimitedTo(out);
                         }
                         return; // Exit handler
@@ -151,24 +192,33 @@ public class AuctionServer
                         response = buildError("Unknown request type");
                 }
 
-                if (response != null) {
+                if (response != null) 
+                {
                     response.writeDelimitedTo(out);
                 }
             }
 
             System.out.println("[Client " + clientId + "] Disconnected");
 
-        } catch (IOException e) {
+        } 
+        catch (IOException e) 
+        {
             System.err.println("[Client " + clientId + "] Error: " + e.getMessage());
-        } finally {
+        } 
+        finally 
+        {
             // Cleanup
-            if (playerName != null) {
+            if (playerName != null) 
+            {
                 activePlayerNames.remove(playerName);
                 System.out.println("[Client " + clientId + "] Removed player: " + playerName);
             }
-            try {
+            try 
+            {
                 clientSocket.close();
-            } catch (IOException e) {
+            } 
+            catch (IOException e) 
+            {
                 // Ignore
             }
         }
@@ -178,14 +228,17 @@ public class AuctionServer
      * Handle REGISTER request - set player name.
      * Returns [playerName, errorMessage] - playerName is null if error.
      */
-    private static String[] handleRegister(Request request, String currentName) {
+    private static String[] handleRegister(Request request, String currentName) 
+    {
         String name = request.getName().trim();
 
-        if (name.isEmpty()) {
+        if (name.isEmpty()) 
+        {
             return new String[]{null, "Name cannot be empty"};
         }
 
-        if (activePlayerNames.contains(name)) {
+        if (activePlayerNames.contains(name)) 
+        {
             return new String[]{null, "Name already taken. Please choose another."};
         }
 
@@ -197,9 +250,11 @@ public class AuctionServer
     /**
      * Handle QUIT request.
      */
-    private static Response handleQuit(PlayerGameState gameState) {
+    private static Response handleQuit(PlayerGameState gameState) 
+    {
         String message = "Thanks for playing!";
-        if (gameState != null) {
+        if (gameState != null) 
+        {
             message += " Final score: " + gameState.getPlayerScore() + ".";
         }
         message += " Goodbye!";
@@ -214,14 +269,16 @@ public class AuctionServer
     /**
      * Helper: send welcome response.
      */
-    private static void sendWelcome(OutputStream out, String message) throws IOException {
+    private static void sendWelcome(OutputStream out, String message) throws IOException 
+    {
         buildWelcome(message).writeDelimitedTo(out);
     }
 
     /**
      * Helper: build welcome response.
      */
-    private static Response buildWelcome(String message) {
+    private static Response buildWelcome(String message) 
+    {
         return Response.newBuilder()
                 .setType(Response.ResponseType.WELCOME)
                 .setOk(true)
@@ -232,7 +289,8 @@ public class AuctionServer
     /**
      * Helper: build error response.
      */
-    private static Response buildError(String message) {
+    private static Response buildError(String message) 
+    {
         return Response.newBuilder()
                 .setType(Response.ResponseType.ERROR)
                 .setOk(false)
@@ -241,10 +299,22 @@ public class AuctionServer
     }
 
     /**
+     * Helper: build game joined response
+     */
+    private static Response buildGameJoined(PlayerGameState gameState)
+    {
+        Item firstItem = gameState.getCurrentItem();
+        String message = "Game started! You're playing against " +gameState.getBot1().getName() + ", " +gameState.getBot2().getName() + ", and " + gameState.getBot3().getName() + ".";
+        return Response.newBuilder().setType(Response.ResponseType.GAME_JOINED).setOk(true).setMessage(message).setPlayerStatus(PlayerStatus.newBuilder().setGoldRemaining(gameState.getGold()).build())
+                .setNextItem(itemToProto(firstItem)).build();
+    }
+
+    /**
      * Helper: convert Item to protobuf AuctionItem.
      * Includes reserve_price calculated as 50% of min_value.
      */
-    private static AuctionItem itemToProto(Item item) {
+    private static AuctionItem itemToProto(Item item) 
+    {
         return AuctionItem.newBuilder()
                 .setId(item.getId())
                 .setName(item.getName())
@@ -258,14 +328,16 @@ public class AuctionServer
     /**
      * Helper: get random bot name.
      */
-    private static String getRandomBotName() {
+    private static String getRandomBotName() 
+    {
         return BOT_NAMES[botNameRandom.nextInt(BOT_NAMES.length)];
     }
 
     /**
      * Inner class to track player game state.
      */
-    private static class PlayerGameState {
+    private static class PlayerGameState 
+    {
         private String playerName;
         private int gold;
         private List<Item> inventory;
@@ -275,7 +347,8 @@ public class AuctionServer
         private BotOpponent bot2;
         private BotOpponent bot3;
 
-        public PlayerGameState(String playerName, boolean gradingMode) {
+        public PlayerGameState(String playerName, boolean gradingMode) 
+        {
             this.playerName = playerName;
             this.gold = initialGold;
             this.inventory = new ArrayList<>();
@@ -291,7 +364,8 @@ public class AuctionServer
             this.bot3 = createUniqueBot(usedNames, gradingMode);
         }
 
-        private BotOpponent createUniqueBot(Set<String> usedNames, boolean gradingMode) {
+        private BotOpponent createUniqueBot(Set<String> usedNames, boolean gradingMode) 
+        {
             String name;
             do {
                 name = getRandomBotName();
@@ -306,64 +380,78 @@ public class AuctionServer
          * bid_amount of -1 means skip (treated as bid of 0).
          * Bids > 0 must meet the reserve price.
          */
-        public String validateBid(int itemId, int bidAmount) {
+        public String validateBid(int itemId, int bidAmount) 
+        {
             Item currentItem = getCurrentItem();
 
-            if (currentItem.getId() != itemId) {
+            if (currentItem.getId() != itemId) 
+            {
                 return "Invalid item ID. Current item is #" + currentItem.getId();
             }
 
             // -1 means skip
-            if (bidAmount == -1) {
+            if (bidAmount == -1) 
+            {
                 return null; // Valid skip
             }
 
-            if (bidAmount < 0) {
+            if (bidAmount < 0) 
+            {
                 return "Bid cannot be negative (use -1 to skip)";
             }
 
-            if (bidAmount > gold) {
+            if (bidAmount > gold) 
+            {
                 return "Insufficient gold. You have " + gold + " gold.";
             }
 
             // Check reserve price (bids > 0 must meet reserve)
             int reservePrice = currentItem.getMinValue() / 2;
-            if (bidAmount > 0 && bidAmount < reservePrice) {
+            if (bidAmount > 0 && bidAmount < reservePrice) 
+            {
                 return "Bid must meet reserve price of " + reservePrice + " gold.";
             }
 
             return null; // Valid
         }
 
-        public void awardItemToPlayer(Item item, int bidAmount) {
+        public void awardItemToPlayer(Item item, int bidAmount) 
+        {
             inventory.add(item);
             gold -= bidAmount;
         }
 
-        public boolean moveToNextItem() {
+        public boolean moveToNextItem() 
+        {
             currentItemIndex++;
             return currentItemIndex < items.size();
         }
 
-        public Item getCurrentItem() {
+        public Item getCurrentItem() 
+        {
             return items.get(currentItemIndex);
         }
 
-        public int getInventoryValue() {
+        public int getInventoryValue() 
+        {
             int total = 0;
-            for (Item item : inventory) {
+            for (Item item : inventory) 
+            {
                 total += item.getActualValue();
             }
             return total;
         }
 
-        public int getPlayerScore() {
+        public int getPlayerScore() 
+        {
             return gold + getInventoryValue();
         }
 
-        public List<String> getItemNames() {
+        public List<String> getItemNames() 
+        {
             List<String> names = new ArrayList<>();
-            for (Item item : inventory) {
+            for (Item item : inventory) 
+            {
                 names.add(item.getName());
             }
             return names;
