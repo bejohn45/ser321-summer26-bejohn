@@ -13,6 +13,8 @@ You will learn about:
 - **Multi-threading** - Handling multiple clients simultaneously
 - **Thread safety** - Protecting shared data from race conditions
 
+## Demo Video Link: https://youtu.be/wiwSy2zryAQ
+
 ## Starter Code
 
 ### What's Provided
@@ -25,6 +27,7 @@ You will learn about:
 6. **JsonUtils.java** - JSON utility methods
 7. **task.proto** - Protobuf protocol definition (STARTER - incomplete)
 8. **build.gradle** - Build configuration
+
 
 ### Running the Starter Code
 
