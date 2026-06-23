@@ -169,4 +169,78 @@ public class ProtocolTest {
             .build();
         joinRequest.writeDelimitedTo(out);
     }
+
+    private void sendBid(int itemId, int bidAmount) throws IOException
+    {
+        Request bidRequest = Request.newBuilder().setType(Request.RequestType.BID).setItemId(itemId).setBidAmount(bidAmount).build();
+        bidRequest.writeDelimitedTo(out);
+    }
+
+    /**
+     * Test 5: JOIN Request
+     * Server should start new game and return GAME_JOINED with first item and starting gold
+     */
+    @Test
+    @Order(5)
+    public void testJoinRequest() throws IOException
+    {
+        Response.parseDelimitedFrom(in); // initial welcome
+        sendRegister("JoinTestPlayer");
+        sendJoin();
+        Response response = Response.parseDelimitedFrom(in);
+        assertNotNull(response, "Server should respond to JOIN request");
+        assertEquals(Response.ResponseType.GAME_JOINED, response.getType(), "Response should be GAME_JOINED");
+        assertTrue(response.getOk(), "JOIN request should succeed");
+        assertEquals(150, response.getPlayerStatus().getGoldRemaining(), "Player should start with 150 gold");
+        assertTrue(response.hasNextItem(), "GAME_JOINED should include the first item");
+
+        AuctionItem firstItem = response.getNextItem();
+        assertEquals(1, firstItem.getId(), "First item in grading mode should be item 1");
+        assertEquals("Dragon Slayer Sword", firstItem.getName(), "Grading mode always loads same items in same order");
+        assertEquals(20, firstItem.getReservePrice(), "Reserve price should be 50% of min value 40, so 20");
+    }
+
+
+    /**
+     * Test 6: BID Request - Bid Below Reserve
+     * Server should reject bids below reserve price
+     */
+    @Test
+    @Order(6)
+    public void testBidBelowReserve() throws IOException
+    {
+        Response.parseDelimitedFrom(in); // initial welcome
+        sendRegister("ReserveTestPlayer");
+        sendJoin();
+        Response.parseDelimitedFrom(in);
+
+        // check item 1 with reserve price 20
+        sendBid(1, 10);
+        Response response = Response.parseDelimitedFrom(in);
+
+        assertNotNull(response, "Server should respond to BID request");
+        assertEquals(Response.ResponseType.ERROR, response.getType(), "Bid below reserve price should be rejected");
+        assertFalse(response.getOk(), "Error response should have ok=false");
+        assertTrue(response.getMessage().toLowerCase().contains("reserve"),"Error message should mention reserve price");
+    }
+
+
+    /**
+     * Test 7: LEADERBOARD Request
+     * Server should return top 10 scores in LEADERBOARD_RESPONSE
+     */
+    @Test
+    @Order(7)
+    public void testLeaderboardRequest() throws IOException
+    {
+        Response.parseDelimitedFrom(in); // initial welcome
+        Request leaderboardRequest = Request.newBuilder().setType(Request.RequestType.LEADERBOARD).build();
+        leaderboardRequest.writeDelimitedTo(out);
+        Response response = Response.parseDelimitedFrom(in);
+
+        assertNotNull(response, "Server should respond to LEADERBOARD request");
+        assertEquals(Response.ResponseType.LEADERBOARD_RESPONSE, response.getType(), "Response should be LEADERBOARD_RESPONSE");
+        assertTrue(response.getOk(), "LEADERBOARD request should succeed");
+        assertTrue(response.getLeaderboard().getEntriesList().size() <= 10, "Leaderboard should only return top 10 scores");
+    }
 }

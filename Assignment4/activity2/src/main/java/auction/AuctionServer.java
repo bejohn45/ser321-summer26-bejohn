@@ -166,12 +166,12 @@ public class AuctionServer
                         // check if player name null
                         if (playerName == null)
                         {
-                            response = buildError("Please set your name first!");
+                            response = buildError("Please set your name first");
                         }
                         // check if player in game already
                         else if (gameState != null)
                         {
-                            response = buildError("You are already in a game!");
+                            response = buildError("You are already in a game");
                         }
                         else
                         {
@@ -184,7 +184,7 @@ public class AuctionServer
                         // check if player not in game
                         if (gameState == null)
                         {
-                            response = buildError("You are not in a game!");
+                            response = buildError("You must join a game first");
                         }
                         else
                         {
@@ -347,7 +347,7 @@ public class AuctionServer
 
         // build response, check if more items in auction
         boolean moreItems = gameState.moveToNextItem();
-        Response.Builder response = Response.newBuilder().setType(Response.ResponseType.BID_RESULT).setOk(true).setMessage(moreItems ? "Auction round complete!" : "Auction complete! Calculating final scores...")
+        Response.Builder response = Response.newBuilder().setType(Response.ResponseType.BID_RESULT).setOk(true).setMessage(moreItems ? "Auction complete!" : "Auction complete! Calculating final scores...")
             .setResult(result).setPlayerStatus(PlayerStatus.newBuilder().setGoldRemaining(gameState.getGold()).build());
         // if more items set next in response
         if (moreItems)
@@ -414,7 +414,7 @@ public class AuctionServer
     private static Response buildGameJoined(PlayerGameState gameState)
     {
         Item firstItem = gameState.getCurrentItem();
-        String message = "Game started! You're playing against " +gameState.getBot1().getName() + ", " +gameState.getBot2().getName() + ", and " + gameState.getBot3().getName() + ".";
+        String message = "Game started! You're playing against " +gameState.getBot1().getName() + ", " +gameState.getBot2().getName() + ", and " + gameState.getBot3().getName() + ". Current item:";
         return Response.newBuilder().setType(Response.ResponseType.GAME_JOINED).setOk(true).setMessage(message).setPlayerStatus(PlayerStatus.newBuilder().setGoldRemaining(gameState.getGold()).build())
                 .setNextItem(itemToProto(firstItem)).build();
     }
@@ -470,7 +470,7 @@ public class AuctionServer
         // get top 10 scores, build leaderboard proto
         List<LeaderboardEntry> topScores = leaderboard.getTopScores(10);
         Leaderboard leaderboardProto = Leaderboard.newBuilder().addAllEntries(topScores).build();
-        return Response.newBuilder().setType(Response.ResponseType.LEADERBOARD_RESPONSE).setOk(true).setMessage("Top 10 Leaderboard").setLeaderboard(leaderboardProto).build();
+        return Response.newBuilder().setType(Response.ResponseType.LEADERBOARD_RESPONSE).setOk(true).setMessage("Top 10 Scores:").setLeaderboard(leaderboardProto).build();
     }
 
 
