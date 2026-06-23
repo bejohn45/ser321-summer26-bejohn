@@ -261,14 +261,16 @@ public class AuctionServer
         {
             return new String[]{null, "Name cannot be empty"};
         }
-
-        if (activePlayerNames.contains(name)) 
+        // check if name already taken
+        synchronized (activePlayerNames)
         {
-            return new String[]{null, "Name already taken. Please choose another."};
+            if (activePlayerNames.contains(name)) 
+            {
+                return new String[]{null, "Name already taken. Please choose another."};
+            }
+            // Add new name
+            activePlayerNames.add(name);
         }
-
-        // Add new name
-        activePlayerNames.add(name);
         return new String[]{name, null};
     }
 
