@@ -188,7 +188,18 @@ public class AuctionServer
                         }
                         else
                         {
-                            response = handleBid(request, gameState);
+                            // bid response
+                            Response bidResponse = handleBid(request, gameState);
+                            bidResponse.writeDelimitedTo(out);
+                            // check if game over
+                            boolean gameOver = ((bidResponse.getType() == Response.ResponseType.BID_RESULT) && (!bidResponse.hasNextItem()));
+                            if (gameOver)
+                            {
+                                Response gameOverResponse = buildGameOver(gameState);
+                                gameOverResponse.writeDelimitedTo(out);
+                            }
+                            // response already sent
+                            response = null;
                         }
                         break;
                     case QUIT:
@@ -402,6 +413,49 @@ public class AuctionServer
         return Response.newBuilder().setType(Response.ResponseType.GAME_JOINED).setOk(true).setMessage(message).setPlayerStatus(PlayerStatus.newBuilder().setGoldRemaining(gameState.getGold()).build())
                 .setNextItem(itemToProto(firstItem)).build();
     }
+
+
+    /**
+     * Helper: build game over response
+     */
+    private static Response buildGameOver(PlayerGameState gameState)
+    {
+        // get bots
+        BotOpponent bot1 = gameState.getBot1();
+        BotOpponent bot2 = gameState.getBot2();
+        BotOpponent bot3 = gameState.getBot3();
+
+        // build player statuses and add to list
+        PlayerStatus playerStatus = PlayerStatus.newBuilder().setPlayerName(gameState.getPlayerName()).setGoldRemaining(gameState.getGold()).setItemsValue(gameState.getInventoryValue()).
+            setTotalScore(gameState.getPlayerScore()).addAllItemsWon(gameState.getItemNames()).build();
+        PlayerStatus bot1Status = PlayerStatus.newBuilder().setPlayerName(bot1.getName()).setGoldRemaining(bot1.getGold()).setItemsValue(bot1.getInventoryValue()).
+            setTotalScore(bot1.getTotalScore()).addAllItemsWon(bot1.getItemNames()).build();
+        PlayerStatus bot2Status = PlayerStatus.newBuilder().setPlayerName(bot2.getName()).setGoldRemaining(bot2.getGold()).setItemsValue(bot2.getInventoryValue()).
+            setTotalScore(bot2.getTotalScore()).addAllItemsWon(bot2.getItemNames()).build();
+        PlayerStatus bot3Status = PlayerStatus.newBuilder().setPlayerName(bot3.getName()).setGoldRemaining(bot3.getGold()).setItemsValue(bot3.getInventoryValue()).
+            setTotalScore(bot3.getTotalScore()).addAllItemsWon(bot3.getItemNames()).build();
+        List<PlayerStatus> allStatuses = Arrays.asList(playerStatus, bot1Status, bot2Status, bot3Status);
+
+        // determine winner
+        String winner = allStatuses.get(0).getPlayerName();
+        int winnerScore = allStatuses.get(0).getTotalScore();
+        for (PlayerStatus status : allStatuses)
+        {
+            int score = status.getTotalScore();
+            String name = status.getPlayerName();
+            if ((score > winnerScore) || ((score == winnerScore) && (name.compareTo(winner) < 0)))
+            {
+                winnerScore = score;
+                winner = name;
+            }
+        }
+
+        // record player score in leaderboard
+        int rank = leaderboard.addScore(gameState.getPlayerName(), gameState.getPlayerScore());
+        GameResult gameResult = GameResult.newBuilder().addAllPlayerScores(allStatuses).setWinnerName(winner).setLeaderboardPosition(rank).build();
+        return Response.newBuilder().setType(Response.ResponseType.GAME_OVER).setOk(true).setMessage("Game over! Final results:").setGameResult(gameResult).build();
+    }
+
 
     /**
      * Helper: convert Item to protobuf AuctionItem.
