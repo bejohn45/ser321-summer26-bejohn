@@ -13,7 +13,8 @@ import java.util.concurrent.Executors;
  * Auction Game Server - Players compete against bot opponents.
  * Each player plays independently against 3 bots.
  */
-public class AuctionServer {
+public class AuctionServer 
+{
     private static final int DEFAULT_PORT = 8889;
     private static final String SCORES_FILE = "scores.txt";
 
@@ -23,7 +24,7 @@ public class AuctionServer {
     private static LeaderboardManager leaderboard;
 
     // Track connected player names (to prevent duplicates)
-    private static Set<String> activePlayerNames = new HashSet<>();
+    private static Set<String> activePlayerNames = Collections.synchronizedSet(new HashSet<>());
 
     // Grading mode flag
     private static boolean gradingMode = false;
@@ -35,6 +36,28 @@ public class AuctionServer {
             "Isolde", "Jasper"
     };
     private static Random botNameRandom = new Random();
+
+
+    /**
+     * Inner worker thread class to handle each client connection
+     */
+    private static class WorkerThread implements Runnable
+    {
+        private final Socket clientSocket;
+        private final int clientId;
+
+        public WorkerThread(Socket clientSocket, int clientId) 
+        {
+            this.clientSocket = clientSocket;
+            this.clientId = clientId;
+        }
+
+        @Override
+        public void run() 
+        {
+            processConnection(clientSocket, clientId);
+        }
+    }
 
     public static void main(String[] args) {
         int port = DEFAULT_PORT;
@@ -70,8 +93,9 @@ public class AuctionServer {
                     final int id = clientId;
                     System.out.println("Client " + id + " connected from " +
                             clientSocket.getInetAddress().getHostAddress());
-
-                    processConnection(clientSocket, id);
+                    // start new worker thread for each client
+                    WorkerThread worker = new WorkerThread(clientSocket, id);
+                    new Thread(worker).start();
                 } catch (IOException e) {
                     System.err.println("Error accepting client: " + e.getMessage());
                 }
