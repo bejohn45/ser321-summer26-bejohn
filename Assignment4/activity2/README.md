@@ -25,6 +25,16 @@ You will learn about:
 10. **build.gradle** - Build configuration
 11. **ProtocolTest.java** - 4 starter tests
 
+### What I Implemented
+
+[x] Thread Setup
+[x] JOIN Request
+[x] BID
+[x] GAME_OVER
+[x] Leaderboard Request
+[x] Thread Safety
+[x] Protocol Tests
+
 ### Running the Starter Code
 
 **Build without running tests:**
@@ -141,3 +151,9 @@ Server: Game over! Final results:
 - Follow the protocol specification exactly
 - Test with multiple concurrent clients
 - Make sure leaderboard persists across server restarts (uses `scores.txt`)
+
+
+## Design Decisions and Challenges
+
+I got stuck on the logic for sending GAME_OVER after the 5th item is bid in the auction. I realized I needed to check in the BID case if there is no next item. 
+Another design decision I had to make was trying to figure out how to deal with a tie scenario. I used a loop to track the highest bid so far and the winner of tie is whoever's name is first alphabetically.
