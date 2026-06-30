@@ -5,6 +5,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 
 /**
  * Leader node to manage workers with assigning tasks and determining consensus
@@ -48,7 +52,48 @@ public class Leader
     private void start(int port) throws Exception
     {
         ServerSocket serverSocket = new ServerSocket(port);
+        System.out.println("Leader starting on port " + port);
+        System.out.println("Waiting for workers to connect... (need at least " +MIN_WORKERS+ ")");
 
+        // accept connections
+        while (workers.size() < MIN_WORKERS)
+        {
+            Socket socket = serverSocket.accept();
+        }
+
+    }
+
+
+
+    private class WorkerHandler extends Thread
+    {
+        private final Socket socket;
+        private final String name;
+        private final BufferedReader in;
+        private final PrintWriter out;
+
+        WorkerHandler(Socket socket) throws IOException
+        {
+            this.socket = socket;
+            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.out = new PrintWriter(socket.getOutputStream(), true);
+            
+        }
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                String line;
+                while ((line = in.readLine()) != null)
+                {
+                    if (line.startsWith("RESULT:"))
+                    {
+                        String result = line.substring("RESULT:".length()).trim();
+                }
+            }
+        }
     }
 
 
