@@ -7,6 +7,7 @@ import java.util.concurrent.CountDownLatch;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
@@ -17,7 +18,7 @@ public class Leader
 {
     private static final int MIN_WORKERS = 3;               // min number of workers to start
     private static final int ROUND_TIMEOUT_SECONDS = 30;    // round timeout in seconds
-    private final List<Worker> workers = Collections.synchronizedList(new ArrayList<>());   // synchronized list of workers
+    private final List<WorkerHandler> workers = Collections.synchronizedList(new ArrayList<>());   // synchronized list of workers
     private volatile Round currentRound;    // current round
 
     /**
@@ -35,6 +36,114 @@ public class Leader
         {
             this.task = task;
             this.latch = new CountDownLatch(numWorkers);
+        }
+    }
+
+    /**
+     * Inner class to handle each worker connection
+     */
+    private class WorkerHandler extends Thread
+    {
+        private final Socket socket;
+        private final String name;
+        private final BufferedReader in;
+        private final PrintWriter out;
+
+        WorkerHandler(Socket socket) throws IOException
+        {
+            this.socket = socket;
+            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.out = new PrintWriter(socket.getOutputStream(), true);
+            setDaemon(true);
+
+            // first line from worker
+            String hello = in.readLine();
+            String workerName = "Worker@" +socket.getPort();
+            if ((hello != null) && (hello.startsWith("HELLO:")))
+            {
+                workerName = hello.substring("HELLO ".length()).trim();
+            }
+            this.name = workerName;
+            // add worker to list
+            workers.add(this);
+            System.out.println(name+ " connected from " +socket.getInetAddress().getHostName()+ ":" +socket.getPort());
+            
+        }
+
+        /**
+         * Run method to read messages from worker and record results
+         */
+        @Override
+        public void run()
+        {
+            // read result messages from worker
+            try
+            {
+                String line;
+                while ((line = in.readLine()) != null)
+                {
+                    // record result
+                    if (line.startsWith("RESULT:"))
+                    {
+                        String result = line.substring("RESULT:".length()).trim();
+                        recordResult(result);
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+            // end of connection
+            finally
+            {
+                workers.remove(this);
+                System.out.println("(Leader) : " +name+ " disconnected.");
+                close();
+            }
+        }
+
+        /**
+         * Record the result from a worker for current round
+         */
+        private void recordResult(String value)
+        {
+            Round round = currentRound;
+            // check if not active round
+            if (round == null)
+            {
+                return;
+            }
+
+            // 1 vote per worker per round and 1 latch countdown
+            if (round.results.putIfAbsent(value, value) == null)
+            {
+                System.out.println("Received from " +name+ ": " + value);
+                round.latch.countDown();
+            }
+        }
+
+        /**
+         * Send a message to the worker
+         */
+        void send(String message)
+        {
+            out.println(message);
+        }
+
+        /**
+         * Close socket connection
+         */
+        void close()
+        {
+            try
+            {
+                socket.close();
+            }
+            catch (IOException e)
+            {
+                
+            }
         }
     }
 
@@ -63,42 +172,4 @@ public class Leader
 
     }
 
-
-
-    private class WorkerHandler extends Thread
-    {
-        private final Socket socket;
-        private final String name;
-        private final BufferedReader in;
-        private final PrintWriter out;
-
-        WorkerHandler(Socket socket) throws IOException
-        {
-            this.socket = socket;
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            this.out = new PrintWriter(socket.getOutputStream(), true);
-            
-        }
-
-        @Override
-        public void run()
-        {
-            try
-            {
-                String line;
-                while ((line = in.readLine()) != null)
-                {
-                    if (line.startsWith("RESULT:"))
-                    {
-                        String result = line.substring("RESULT:".length()).trim();
-                }
-            }
-        }
-    }
-
-
-
-
-
-    
 }
