@@ -147,6 +147,7 @@ public class Leader
         }
     }
 
+
     /**
      * Main method to start the leader node
      */
@@ -158,18 +159,60 @@ public class Leader
         leader.start(port);
     }
 
+
+    /**
+     * Start the leader node on port and accept worker connections
+     */
     private void start(int port) throws Exception
     {
         ServerSocket serverSocket = new ServerSocket(port);
         System.out.println("Leader starting on port " + port);
         System.out.println("Waiting for workers to connect... (need at least " +MIN_WORKERS+ ")");
 
-        // accept connections
+        // accept workers 1 at a time
         while (workers.size() < MIN_WORKERS)
         {
             Socket socket = serverSocket.accept();
+            WorkerHandler worker = new WorkerHandler(socket);
+            worker.start();
         }
+        // start rounds
+        System.out.println("\nAll " +workers.size()+ " workers connected. Starting consensus rounds...\n");
+        runRounds();
+        shutdown(serverSocket);
+    }
 
+
+    private void runRounds() throws Exception
+    {
+
+    }
+
+    /**
+     * Shutdown leader and notify workers to quit
+     */
+    private void shutdown(ServerSocket serverSocket)
+    {
+        System.out.println("\nShutting down. Notifying workers...");
+        // close worker connections
+        synchronized (workers)
+        {
+            for (WorkerHandler worker : workers)
+            {
+                worker.send("QUIT");
+                worker.close();
+            }
+        }
+        // close server socket
+        try
+        {
+            serverSocket.close();
+        }
+        catch (IOException e)
+        {
+            
+        }
+        System.out.println("Leader stopped.");
     }
 
 }
