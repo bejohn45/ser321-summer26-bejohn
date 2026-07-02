@@ -117,7 +117,7 @@ public class Leader
             }
 
             // 1 vote per worker per round and 1 latch countdown
-            if (round.results.putIfAbsent(value, value) == null)
+            if (round.results.putIfAbsent(name, value) == null)
             {
                 System.out.println("Received from " +name+ ": " + value);
                 round.latch.countDown();
