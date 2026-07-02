@@ -299,7 +299,7 @@ public class Leader
             consensusMessage = consensusMessageWorker;
         }
         // check if no majority
-        else if ((mostVotes * 2) <= totalAnswers)
+        else if ((mostVotes * 2) < totalAnswers)
         {
             consensusMessageWorker = "No consensus reached: no answer is a majority. Distribution: " +voteCount;
             consensusMessage = consensusMessageWorker;
