@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.LinkedHashMap;
 
 /**
  * Leader node to manage workers with assigning tasks and determining consensus
@@ -245,13 +246,76 @@ public class Leader
         }
         // close round and determine consensus
         currentRound = null;
-        determineConsensus(roundNumber, currentWorkers);
+        determineConsensus(round, currentWorkers);
     }
 
 
-    private void determineConsensus(int roundNumber, List<WorkerHandler> workers)
+    /**
+     * Determine consensus from round results and announce to workers
+     */
+    private void determineConsensus(Round round, List<WorkerHandler> workers)
     {
+        Map<String, String> results = round.results;
+        int totalAnswers = results.size();
+        // track map of value to count of votes
+        Map<String, Integer> voteCount = new LinkedHashMap<>();
+        for (String value : results.values())
+        {
+            // add vote for value
+            voteCount.put(value, voteCount.getOrDefault(value, 0) + 1);
+        }
+        System.out.println("Vote distribution: " +voteCount);
+    
+        // find most votes
+        int mostVotes = 0;
+        for (int votes : voteCount.values())
+        {
+            mostVotes = Math.max(mostVotes, votes);
+        }
+        String winner = null;
+        int numTied = 0;
+        for (Map.Entry<String, Integer> entry : voteCount.entrySet())
+        {
+            // check if value has most votes
+            if (entry.getValue() == mostVotes)
+            {
+                numTied++;
+                winner = entry.getKey();
+            }
+        }
 
+        // determine consensus
+        String consensusMessage;
+        String consensusMessageWorker;
+        if (totalAnswers == 0)
+        {
+            consensusMessageWorker = "No consensus reached: 0 responses";
+            consensusMessage = consensusMessageWorker;
+        }
+        // check if ties
+        else if (numTied > 1)
+        {
+            consensusMessageWorker = "No consensus reached: tie at " +mostVotes+ " votes. Distribution: " +voteCount;
+            consensusMessage = consensusMessageWorker;
+        }
+        // check if no majority
+        else if ((mostVotes * 2) <= totalAnswers)
+        {
+            consensusMessageWorker = "No consensus reached: no answer is a majority. Distribution: " +voteCount;
+            consensusMessage = consensusMessageWorker;
+        }
+        else
+        {
+            consensusMessageWorker = winner+ " (" +mostVotes+ "/" +totalAnswers+ " workers agreed)";
+            consensusMessage = "Consensus: " +consensusMessageWorker;
+        }
+
+        // print and announce consensus to workers
+        System.out.println(consensusMessage);
+        for (WorkerHandler worker : workers)
+        {
+            worker.send("CONSENSUS " + consensusMessageWorker);
+        }
     }
 
 
@@ -277,7 +341,7 @@ public class Leader
         }
         catch (IOException e)
         {
-            
+            e.printStackTrace();
         }
         System.out.println("Leader stopped.");
     }
