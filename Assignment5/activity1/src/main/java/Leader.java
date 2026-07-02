@@ -60,7 +60,7 @@ public class Leader
             // first line from worker
             String hello = in.readLine();
             String workerName = "Worker@" +socket.getPort();
-            if ((hello != null) && (hello.startsWith("HELLO:")))
+            if ((hello != null) && (hello.startsWith("HELLO ")))
             {
                 workerName = hello.substring("HELLO ".length()).trim();
             }
@@ -84,9 +84,9 @@ public class Leader
                 while ((line = in.readLine()) != null)
                 {
                     // record result
-                    if (line.startsWith("RESULT:"))
+                    if (line.startsWith("RESULT "))
                     {
-                        String result = line.substring("RESULT:".length()).trim();
+                        String result = line.substring("RESULT ".length()).trim();
                         recordResult(result);
                     }
                 }
