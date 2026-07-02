@@ -183,9 +183,47 @@ public class Leader
     }
 
 
+    /**
+     * Run rounds until user quits
+     */
     private void runRounds() throws Exception
     {
+        BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
+        int roundNumber = 0;
+        // 
+        while (true)
+        {
+            // check if no rounds started yet
+            if (roundNumber == 0)
+            {
+                System.out.println("Please enter an arithmetic task:");
+            }
+            // other rounds ask for task or quit
+            else
+            {
+                System.out.println("Please enter an arithmetic task (or 'quit'):");
+            }
+            // read task from console
+            String task = console.readLine();
+            if ((task == null) || task.trim().equalsIgnoreCase("quit"))
+            {
+                break;
+            }
+            task = task.trim();
+            if (task.isEmpty())
+            {
+                continue;
+            }
+            // run round
+            roundNumber++;
+            runRound(roundNumber, task);
+        }
+    }
 
+
+    private void runRound(int roundNumber, String task) throws InterruptedException
+    {
+        
     }
 
     /**
