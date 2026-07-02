@@ -143,7 +143,7 @@ public class Leader
             }
             catch (IOException e)
             {
-                
+                e.printStackTrace();
             }
         }
     }
