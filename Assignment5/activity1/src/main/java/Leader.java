@@ -153,22 +153,28 @@ public class Leader
     {
         // if port not given -> using default 9000
         int port = (args.length > 0) ? Integer.parseInt(args[0]) : 9000;
+        // if min workers not given --> using default 3
+        int moreMinWorkers = (args.length > 1) ? Integer.parseInt(args[1]) : MIN_WORKERS;
+        if (moreMinWorkers < MIN_WORKERS)
+        {
+            moreMinWorkers = MIN_WORKERS;
+        }
         Leader leader = new Leader();
-        leader.start(port);
+        leader.start(port, moreMinWorkers);
     }
 
 
     /**
      * Start the leader node on port and accept worker connections
      */
-    private void start(int port) throws Exception
+    private void start(int port, int minWorkers) throws Exception
     {
         ServerSocket serverSocket = new ServerSocket(port);
         System.out.println("Leader starting on port " + port);
-        System.out.println("Waiting for workers to connect... (need at least " +MIN_WORKERS+ ")");
+        System.out.println("Waiting for workers to connect... (need at least " +minWorkers+ ")");
 
         // accept workers 1 at a time
-        while (workers.size() < MIN_WORKERS)
+        while (workers.size() < minWorkers)
         {
             Socket socket = serverSocket.accept();
             WorkerHandler worker = new WorkerHandler(socket);
