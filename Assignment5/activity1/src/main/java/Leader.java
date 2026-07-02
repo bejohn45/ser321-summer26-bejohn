@@ -220,11 +220,40 @@ public class Leader
         }
     }
 
-
+    /**
+     * Run a round with given task
+     */
     private void runRound(int roundNumber, String task) throws InterruptedException
     {
-        
+        // current workers list incase worker left
+        List<WorkerHandler> currentWorkers = new ArrayList<>(workers);
+        Round round = new Round(task, currentWorkers.size());
+        currentRound = round;
+        System.out.println("\nRound " +roundNumber+ ": Assigning task \"" +task+ "\"");
+        // send task to workers
+        for (WorkerHandler worker : currentWorkers)
+        {
+            worker.send("TASK " + task);
+        }
+
+        // wait for all answers or timeout
+        boolean allAnswered = round.latch.await(ROUND_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
+        if (!allAnswered)
+        {
+            // timeout message
+            System.out.println("(Leader) Timeout (30 sec) reached. Proceeding with " +round.results.size()+ "/" +currentWorkers.size()+ " responses.");
+        }
+        // close round and determine consensus
+        currentRound = null;
+        determineConsensus(roundNumber, currentWorkers);
     }
+
+
+    private void determineConsensus(int roundNumber, List<WorkerHandler> workers)
+    {
+
+    }
+
 
     /**
      * Shutdown leader and notify workers to quit
