@@ -14,9 +14,14 @@
 ## How to Run
 
 **Leader:**
-With arguments
+With arguments - no minimum workers provided
 ```bash
 gradle runLeader --args "9000"
+```
+
+With arguments - minimum workers provided
+```bash
+gradle runLeader --args "9000 5"
 ```
 
 **Worker:**
@@ -25,7 +30,7 @@ With arguments (run once per worker, in different terminals)
 gradle runWorker --args "localhost 9000"
 ```
 
-The Leader argument is the port. The Worker arguments are the leader's host and port. The Leader assigns each worker a name `Worker1`, `Worker2`, `Worker3`, etc. by the order the Worker connects. Once an arithmetic task is provided to Leader terminal, like `10+5`, enter an answer in each worker terminal for the task. Enter 'quit' in Leader terminal to shutdown Leader and disconnect Workers.
+The Leader argument takes port and minimum workers needed to start rounds. The mimimim workers is optional and would default to 3 if not provided, but rounds won't start till all workers connect. The Worker arguments are the leader's host and port. The Leader assigns each worker a name `Worker1`, `Worker2`, `Worker3`, etc. by the order the Worker connects. Once an arithmetic task is provided to Leader terminal, like `10+5`, enter an answer in each worker terminal for the task. Enter 'quit' in Leader terminal to shutdown Leader and disconnect Workers.
 
 ---
 
