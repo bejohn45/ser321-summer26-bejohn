@@ -240,6 +240,14 @@ public class Leader
         {
             // timeout message
             System.out.println("(Leader) Timeout (30 sec) reached. Proceeding with " +round.results.size()+ "/" +currentWorkers.size()+ " responses.");
+            // notify workers that timed out
+            for (WorkerHandler worker : currentWorkers)
+            {
+                if (!round.results.containsKey(worker.name))
+                {
+                    worker.send("TIMEOUT You did not respond within 30 seconds. Your vote was not counted this round.");
+                }
+            }
         }
         // close round and determine consensus
         currentRound = null;
