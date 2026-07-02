@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Leader node to manage workers with assigning tasks and determining consensus
@@ -21,6 +22,7 @@ public class Leader
     private static final int ROUND_TIMEOUT_SECONDS = 30;    // round timeout in seconds
     private final List<WorkerHandler> workers = Collections.synchronizedList(new ArrayList<>());   // synchronized list of workers
     private volatile Round currentRound;    // current round
+    private final AtomicInteger workerCounter = new AtomicInteger(0);  // counter for worker ids
 
     /**
      * Inner class for state of current round
@@ -57,14 +59,9 @@ public class Leader
             this.out = new PrintWriter(socket.getOutputStream(), true);
             setDaemon(true);
 
-            // first line from worker
-            String hello = in.readLine();
-            String workerName = "Worker@" +socket.getPort();
-            if ((hello != null) && (hello.startsWith("HELLO ")))
-            {
-                workerName = hello.substring("HELLO ".length()).trim();
-            }
-            this.name = workerName;
+            // assign worker name and send hello message
+            this.name = "Worker" + workerCounter.incrementAndGet();
+            out.println("HELLO " + name);
             // add worker to list
             workers.add(this);
             System.out.println(name+ " connected from " +socket.getInetAddress().getHostName()+ ":" +socket.getPort());
