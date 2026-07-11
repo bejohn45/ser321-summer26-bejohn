@@ -217,6 +217,67 @@ public class Client {
   }
 
 
+  /**
+   * Handle user input for converter service
+   */
+  private static void handleConverter(Client client, BufferedReader reader) throws Exception
+  {
+      // show available units
+      System.out.println("Available units: ");
+      System.out.println("  LENGTH      : KILOMETER, MILE, YARD, FOOT");
+      System.out.println("  WEIGHT      : KILOGRAM, POUND");
+      System.out.println("  TEMPERATURE : CELSIUS, FAHRENHEIT");
+
+      // ask for value
+      System.out.print("Enter value to convert: ");
+      String valueString = reader.readLine();
+      // get units and convert
+      try
+      {
+          double value = Double.parseDouble(valueString);
+          System.out.print("\nFrom unit:  ");
+          String from = reader.readLine().trim().toUpperCase();
+          System.out.print("\nTo unit:  ");
+          String to = reader.readLine().trim().toUpperCase();
+          client.convertUnits(value, from, to);
+      } 
+      catch (NumberFormatException e)
+      {
+          System.out.println("Invalid value");
+      }
+  }
+
+
+  /**
+   * Convert units from one unit to another
+   */
+  public void convertUnits(double value, String from, String to) 
+  {
+      ConversionRequest request = ConversionRequest.newBuilder().setValue(value).setFromUnit(from).setToUnit(to).build();
+      ConversionResponse response;
+
+      // send request to server
+      try 
+      {
+          response = blockingStub5.convert(request);
+      } 
+      catch (Exception e) 
+      {
+          System.out.println("RPC failed: " + e.getMessage());
+          return;
+      }
+      // print conversion result
+      if (response.getIsSuccess())
+      {
+          System.out.println(value + " " + from + " = " + response.getResult() + " " + to);
+      }
+      else
+      {
+          System.out.println("Conversion failed: " + response.getError());
+      }
+  }
+
+
 
   public static void main(String[] args) throws Exception {
     if (args.length != 6) {
@@ -282,49 +343,79 @@ public class Client {
       // create client
       Client client = new Client(channel, regChannel);
 
-      // call the parrot service on the server
-      client.askServerToParrot(message);
+      // // call the parrot service on the server
+      // client.askServerToParrot(message);
 
       // ask the user for input how many jokes the user wants
       BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-      // Reading data using readLine
-      System.out.println("How many jokes would you like?"); // NO ERROR handling of wrong input here.
-      String num = reader.readLine();
+      // main loop for menu
+      boolean running = true;
+      while (running)
+      {
+          printMenu();
+          String choice = reader.readLine();
+          // check what user wants
+          if (choice.equals("0"))
+          {
+              running = false;
+          }
+          else if (choice.equals("1"))
+          {
+              handleEcho(client, reader);
+          }
+          else if (choice.equals("2"))
+          {
+              handleJoke(client, reader);
+          }
+          else if (choice.equals("3"))
+          {
+              handleConverter(client, reader);
+          }
+          else
+          {
+              System.out.println("Invalid choice");
+          }
+      }
 
-      // calling the joked service from the server with num from user input
-      client.askForJokes(Integer.valueOf(num));
 
-      // adding a joke to the server
-      client.setJoke("I made a pencil with two erasers. It was pointless.");
+      // // Reading data using readLine
+      // System.out.println("How many jokes would you like?"); // NO ERROR handling of wrong input here.
+      // String num = reader.readLine();
 
-      // showing 6 joked
-      client.askForJokes(Integer.valueOf(6));
+      // // calling the joked service from the server with num from user input
+      // client.askForJokes(Integer.valueOf(num));
 
-      // list all the services that are implemented on the node that this client is connected to
+      // // adding a joke to the server
+      // client.setJoke("I made a pencil with two erasers. It was pointless.");
 
-      System.out.println("Services on the connected node. (without registry)");
-      client.getNodeServices(); // get all registered services 
+      // // showing 6 joked
+      // client.askForJokes(Integer.valueOf(6));
+
+      // // list all the services that are implemented on the node that this client is connected to
+
+      // System.out.println("Services on the connected node. (without registry)");
+      // client.getNodeServices(); // get all registered services 
 
       // ############### Contacting the registry just so you see how it can be done
 
-      if (args[5].equals("true")) { 
-        // Comment these last Service calls while in Activity 1 Task 1, they are not needed and wil throw issues without the Registry running
-        // get thread's services
-        client.getServices(); // get all registered services 
+      // if (args[5].equals("true")) { 
+      //   // Comment these last Service calls while in Activity 1 Task 1, they are not needed and wil throw issues without the Registry running
+      //   // get thread's services
+      //   client.getServices(); // get all registered services 
 
-        // get parrot
-        client.findServer("services.Echo/parrot"); // get ONE server that provides the parrot service
+      //   // get parrot
+      //   client.findServer("services.Echo/parrot"); // get ONE server that provides the parrot service
         
-        // get all setJoke
-        client.findServers("services.Joke/setJoke"); // get ALL servers that provide the setJoke service
+      //   // get all setJoke
+      //   client.findServers("services.Joke/setJoke"); // get ALL servers that provide the setJoke service
 
-        // get getJoke
-        client.findServer("services.Joke/getJoke"); // get ALL servers that provide the getJoke service
+      //   // get getJoke
+      //   client.findServer("services.Joke/getJoke"); // get ALL servers that provide the getJoke service
 
-        // does not exist
-        client.findServer("random"); // shows the output if the server does not find a given service
-      }
+      //   // does not exist
+      //   client.findServer("random"); // shows the output if the server does not find a given service
+      // }
 
     } finally {
       // ManagedChannels use resources like threads and TCP connections. To prevent
