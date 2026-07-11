@@ -19,6 +19,7 @@ public class Client {
   private final JokeGrpc.JokeBlockingStub blockingStub2;
   private final RegistryGrpc.RegistryBlockingStub blockingStub3;
   private final RegistryGrpc.RegistryBlockingStub blockingStub4;
+  private final ConverterGrpc.ConverterBlockingStub blockingStub5;
 
   /** Construct client for accessing server using the existing channel. */
   public Client(Channel channel, Channel regChannel) {
@@ -32,6 +33,7 @@ public class Client {
     blockingStub2 = JokeGrpc.newBlockingStub(channel);
     blockingStub3 = RegistryGrpc.newBlockingStub(regChannel);
     blockingStub4 = RegistryGrpc.newBlockingStub(channel);
+    blockingStub5 = ConverterGrpc.newBlockingStub(channel);
   }
 
   /** Construct client for accessing server using the existing channel. */
@@ -46,6 +48,7 @@ public class Client {
     blockingStub2 = JokeGrpc.newBlockingStub(channel);
     blockingStub3 = null;
     blockingStub4 = null;
+    blockingStub5 = null;
   }
 
   public void askServerToParrot(String message) {
@@ -140,6 +143,80 @@ public class Client {
       return;
     }
   }
+
+
+  /**
+   * Print menu of services
+   */
+  private static void printMenu()
+  {
+      System.out.println("\nAvailable services:");
+      System.out.println("1- Echo");
+      System.out.println("2- Joke");
+      System.out.println("3- Converter");
+      System.out.println("0- Exit");
+      System.out.println("Choose a service (enter number): ");
+  }
+  
+
+  /**
+   * Handle user input for echo service
+   */
+  private static void handleEcho(Client client, BufferedReader reader) throws Exception
+  {
+      System.out.println("Enter a message to echo: ");
+      String message = reader.readLine();
+      // check if message is empty
+      if (message.isEmpty())
+      {
+        System.out.println("Message cannot be empty.");
+      }
+      else
+      {
+        client.askServerToParrot(message);
+      }
+  }
+
+
+  /**
+   * Handle user input for joke service
+   */
+  private static void handleJoke(Client client, BufferedReader reader) throws Exception
+  {
+      // show joke menu
+      System.out.println("Joke options:");
+      System.out.println("1- Tell me a joke");
+      System.out.println("2- Add a joke");
+      System.out.print("Choose an option (enter number): ");
+      String choice = reader.readLine();
+
+      // check joke choice
+      if (choice.equals("1"))
+      {
+          client.askForJokes(1);
+      }
+      else if (choice.equals("2"))
+      {
+          // ask for joke and add
+          System.out.print("Enter a joke to add: ");
+          String joke = reader.readLine();
+          if (joke.isEmpty())
+          {
+              System.out.println("Joke cannot be empty");
+          }
+          else
+          {
+              client.setJoke(joke);
+          }
+      }
+      // invalid choice
+      else
+      {
+          System.out.println("Invalid choice");
+      }
+  }
+
+
 
   public static void main(String[] args) throws Exception {
     if (args.length != 6) {
