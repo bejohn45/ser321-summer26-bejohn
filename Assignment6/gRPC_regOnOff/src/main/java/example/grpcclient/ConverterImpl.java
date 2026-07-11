@@ -61,12 +61,12 @@ class ConverterImpl extends ConverterGrpc.ConverterImplBase
         // unsupported from_unit given
         else if (!isValidUnit(from))
         {
-            response.setIsSuccess(false).setError("unsupported from_unit: " +from);
+            response.setIsSuccess(false).setError("unsupported unit: " +from);
         }
         // unsupported to_unit given
         else if (!isValidUnit(to))
         {
-            response.setIsSuccess(false).setError("unsupported to_unit: " +to);
+            response.setIsSuccess(false).setError("unsupported unit: " +to);
         }
         // same units given
         else if (from.equals(to))
@@ -86,11 +86,14 @@ class ConverterImpl extends ConverterGrpc.ConverterImplBase
         // valid conversion given
         else
         {
-            
+            double result = roundTwoDecimals(convertUnits(request.getValue(), from, to));
+            response.setIsSuccess(true).setResult(result);
         }
-        // 
+    
+        ConversionResponse r = response.build();
+        responseObserver.onNext(r);
+        responseObserver.onCompleted();
     }
-
 
 
     /**
@@ -100,6 +103,7 @@ class ConverterImpl extends ConverterGrpc.ConverterImplBase
     {
         return LENGTH_UNITS.contains(unit) || WEIGHT_UNITS.contains(unit) || TEMPERATURE_UNITS.contains(unit);
     }
+
 
     /**
      * Check if the conversion is valid for from and to units
@@ -122,5 +126,117 @@ class ConverterImpl extends ConverterGrpc.ConverterImplBase
         {
             return false;
         }
+    }
+
+
+    /**
+     * Convert a value from one unit to other
+     */
+    public double convertUnits(double value, String from, String to)
+    {
+        // check if temperature conversion
+        if (TEMPERATURE_UNITS.contains(from))
+        {
+            // convert celsius to fahrenheit
+            if (from.equals("CELSIUS"))
+            {
+                return (value*9.0/5.0) + 32.0;
+            }
+            // convert fahrenheit to celsius
+            else 
+            {
+                return (value - 32.0) * 5.0 / 9.0;
+            }
+        }
+
+        // check if weight conversion
+        else if (WEIGHT_UNITS.contains(from))
+        {
+            // convert kilogram to pounds
+            if (from.equals("KILOGRAM"))
+            {
+                return (value * 2.20462);
+            }
+            // conver pounds to kilograms
+            else
+            {
+                return (value / 2.20462);
+            }
+        }
+
+        // length conversion
+        else
+        {
+            double valueMeters = toMeters(value, from);
+            return fromMeters(valueMeters, to);
+        }
+    }
+
+    /**
+     * Convert length value to meters
+     */
+    public double toMeters(double value, String unit)
+    {
+        // convert from km to meters
+        if (unit.equals("KILOMETER"))
+        {
+            return (value * 1000.0);
+        }
+        // convert from miles to meters
+        if (unit.equals("MILE"))
+        {
+            return (value * 1609.34);
+        }
+        // convert from yards to meters
+        if (unit.equals("YARD"))
+        {
+            return (value * 0.9144);
+        }
+        // convert from feet to meters
+        if (unit.equals("FOOT"))
+        {
+            return (value * 0.3048);
+        }
+        // meters
+        return value;
+    }
+
+
+    /**
+     * Convert length value from meters to unit given
+     */
+    private double fromMeters(double value, String unit)
+    {
+        // convert from meters to km
+        if (unit.equals("KILOMETER"))
+        {
+            return (value / 1000.0);
+        }
+        // convert from meters to miles
+        if (unit.equals("MILE"))
+        {
+            return (value / 1609.34);
+        }
+        // convert from meters to yards
+        if (unit.equals("YARD"))
+        {
+            return (value / 0.9144);
+        }
+        // convert from meters to feet
+        if (unit.equals("FOOT"))
+        {
+            return (value / 0.3048);
+        }
+        // meters
+        return value;
+    }
+
+
+    /**
+     * Round value to two decimal places
+     */
+    public double roundTwoDecimals(double value)
+    {
+        return new java.math.BigDecimal(value).setScale(2, java.math.RoundingMode.HALF_UP).doubleValue();
     }
 }
