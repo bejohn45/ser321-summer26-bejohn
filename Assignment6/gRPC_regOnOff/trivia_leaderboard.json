@@ -1,5 +1,9 @@
 [
   {
+    "name": "John",
+    "percent": 40
+  },
+  {
     "name": "Bevin",
     "percent": 30
   },

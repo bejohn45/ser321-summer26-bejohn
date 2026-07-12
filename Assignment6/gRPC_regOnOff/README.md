@@ -67,3 +67,132 @@ The tests connect to localhost:8000 by default.
 To run in IDE:
 - go about it like in the ProtoBuf assignment to get rid of errors
 - all mains expect input, so if you want to run them in your IDE you need to provide the inputs for them, see build.gradle
+
+
+
+
+
+
+## Project Description
+This project implements a distributed system using gRPC where a service node hosts services that clients can connect to and use. The system includes a Registry that nodes can register with, so clients and find the services.
+
+Services Available:
+- **Echo** - echoes back a message sent by client
+- **Joke** - get and add jokes on the server
+- **Converter** - converts between units of length, weight, and temperature
+- **Library** - manage a book libray with borrow and returning with persistent state
+- **Trivia** - take a 10 question multiple choice trivia quiz with persistent top 5 leaderboard
+
+## How to Run
+
+### Run locally without registry
+
+First terminal
+
+    gradle runNode
+
+Second terminal
+
+    gradle runClient --console=plain
+
+
+### Run locally with registry
+
+First terminal
+
+    gradle runRegistryServer
+
+Second terminal
+
+    gradle runNode -PregOn=true
+
+Third terminal
+
+    gradle runClient -PregOn=true --console=plain
+
+
+### Run unit tests
+
+IMPORTANT: Tests expect the server to be running first!
+
+First run in one terminal:
+    gradle runNode
+Then in second terminal:
+    gradle serverTest
+
+The tests connect to localhost:8000 by default.
+
+
+### How to work with program
+
+When client starts, it shows menu of available services:
+
+Available services:
+1- Echo
+2- Joke
+3- Converter
+4- Library
+5- Trivia
+0- Exit
+Choose a service (enter number): 
+
+
+### Echo
+Enter any message any the server will echo back
+
+### Joke
+- Option 1: Get jokes - enter how many jokes you want
+- Option 2: Add a joke - enter a joke to add to server
+
+### Converter
+Supports units:
+- LENGTH: KILOMETER, MILE, YARD, FOOT
+- WEIGHT: KILOGRAM, POUND
+- TEMPERATURE: CELSIUS, FAHRENHEIT
+
+Enter a value, then from unit, then to unit. Not case sensitive for units.
+
+### Library
+- Option 1: List all books - shows a books and availability
+- Option 2: Seach books - search by title or author
+- Option 3: Borrow a book - enter isbn and your name
+- Option 4: Return a book - enter isbn
+
+On first run library loads from books.json and creates library_data.json for persistence. Anytime after it loads from library_data.json so data loads when restarting.
+
+### Trivia
+- Option 1: View leaderboard - shows the current top 5 scores
+- Option 2: Take a quiz - enter your name and then answer 10 multiple choice trivia questions
+
+Answer 10 questions to get score. Results shown with CORRECT/WRONG breakdown. If score is in top 5, it is saved to the leaderboard.
+
+
+## List of requirements fullfilled
+
+### Task 1:
+- Node runs with gradle runNode and client runs with gradle runClient
+- Converted service implemented in server and client
+- Library service implemented in server and client with persistent state
+- Easy user interaction
+- Client shows available services and lets user choose
+- Unit tests for Converter and Library in ServerTest.java
+- Library data persists after server restart
+- Server and client handles errors
+
+### Task 2:
+- Protocol design in trivia.proto
+- Client lets user choose Trivia from the menu, then either view the leaderboard or take a quiz 
+- Server loads bank of trivia questions from `questions.json`, randomly selected 10 questions for session, and tracks session progress and score
+- Service allows at least 2 different requests
+- Each request needs at least 1 input
+- Response returns different data for different requests
+- Response returns a repeated field for `choices`, `next_choices`, `all_results`, and `scores`
+- Data is held persistent on the server with top 5 leaderboard saved to `trivia_leaderboard.java` and loaded when started again
+
+## Screencast
+https://youtu.be/_aRIM-RDAmc
+
+
+### Task 3:
+Run with
+    gradle runClient -PserviceHost="3.15.168.230" -PservicePort=8000 --console=plain

@@ -56,9 +56,9 @@
     "title": "Moby-Dick"
   },
   {
-    "is_borrowed": false,
-    "borrowed_by": "",
-    "return_by": "",
+    "is_borrowed": true,
+    "borrowed_by": "Bevin",
+    "return_by": "2026-07-26",
     "author": "J.R.R. Tolkien",
     "isbn": "978-0547928227",
     "title": "The Hobbit"
