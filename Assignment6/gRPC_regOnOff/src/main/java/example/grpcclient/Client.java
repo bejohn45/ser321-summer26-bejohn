@@ -527,7 +527,7 @@ public class Client {
       }
       else if (choice.equals("2"))
       {
-          System.out.println("Enter your name: ");
+          System.out.print("Enter your name: ");
           String name = reader.readLine();
           // check if name empty
           if (name.isEmpty())
@@ -667,6 +667,11 @@ public class Client {
       else
       {
           System.out.println("Error submitting answer: " + response.getError());
+          // if invalid answer continue
+          if (response.getError().equals("invalid answer"))
+          {
+              return true;
+          }
           return false;
       }
   }

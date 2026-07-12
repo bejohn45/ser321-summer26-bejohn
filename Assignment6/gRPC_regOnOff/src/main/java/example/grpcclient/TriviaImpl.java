@@ -208,8 +208,8 @@ class TriviaImpl extends TriviaGrpc.TriviaImplBase
                     // results summary as repeated string
                     for (int i=0; i < TOTAL_QUESTIONS; i++)
                     {
-                        String grade = session.results.get(i) ? "CORRECT" : "WRONG: answer is " +session.questions.get(i).correctAnswer;
-                        response.addAllResults("Q" +(i+1)+ ": " +session.questions.get(i).question+ " - you answered " +session.userAnswers.get(i)+ "    " +grade);
+                        String grade = session.results.get(i) ? "CORRECT" : "WRONG";
+                        response.addAllResults("Q" +(i+1)+ ": " +grade);
                     }
 
                     // update leaderboard if top 5
