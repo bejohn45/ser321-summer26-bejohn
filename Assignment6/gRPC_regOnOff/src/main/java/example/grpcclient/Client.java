@@ -21,6 +21,7 @@ public class Client {
   private final RegistryGrpc.RegistryBlockingStub blockingStub4;
   private final ConverterGrpc.ConverterBlockingStub blockingStub5;
   private final LibraryGrpc.LibraryBlockingStub blockingStub6;
+  private final TriviaGrpc.TriviaBlockingStub blockingStub7;
 
   /** Construct client for accessing server using the existing channel. */
   public Client(Channel channel, Channel regChannel) {
@@ -36,6 +37,7 @@ public class Client {
     blockingStub4 = RegistryGrpc.newBlockingStub(channel);
     blockingStub5 = ConverterGrpc.newBlockingStub(channel);
     blockingStub6 = LibraryGrpc.newBlockingStub(channel);
+    blockingStub7 = TriviaGrpc.newBlockingStub(channel);
   }
 
   /** Construct client for accessing server using the existing channel. */
@@ -52,6 +54,7 @@ public class Client {
     blockingStub4 = null;
     blockingStub5 = null;
     blockingStub6 = LibraryGrpc.newBlockingStub(channel);
+    blockingStub7 = TriviaGrpc.newBlockingStub(channel);
   }
 
   public void askServerToParrot(String message) {
@@ -158,6 +161,7 @@ public class Client {
       System.out.println("2- Joke");
       System.out.println("3- Converter");
       System.out.println("4- Library");
+      System.out.println("5- Trivia");
       System.out.println("0- Exit");
       System.out.println("Choose a service (enter number): ");
   }
@@ -506,6 +510,172 @@ public class Client {
 
 
 
+  /**
+   * Handle user input for trivia service
+   */
+  private static void handleTrivia(Client client, BufferedReader reader) throws Exception
+  {
+      System.out.println("Trivia options:");
+      System.out.println("1- View leaderboard");
+      System.out.println("2- Take a quiz");
+      System.out.println("Choose: ");
+      String choice = reader.readLine();
+      // check user choice
+      if (choice.equals("1"))
+      {
+          client.viewLeaderboard();
+      }
+      else if (choice.equals("2"))
+      {
+          System.out.println("Enter your name: ");
+          String name = reader.readLine();
+          // check if name empty
+          if (name.isEmpty())
+          {
+              System.out.println("Name cannot be empty");
+              return;
+          }
+          String sessionId = client.startTriviaQuiz(name);
+          // check if sessionId null
+          if (sessionId == null)
+          {
+            return;
+          }
+
+          // loop for trivia quiz
+          boolean quizActive = true;
+          while (quizActive)
+          {
+              System.out.println("Your answer (A, B, C, or D): ");
+              String answer = reader.readLine().trim().toUpperCase();
+              quizActive = client.submitTriviaAnswer(sessionId, answer);
+          } 
+      }
+      else
+      {
+          System.out.println("Invalid choice");
+      }
+  }
+
+
+  /**
+   * View top 5 leaderboard
+   */
+  public void viewLeaderboard()
+  {
+      GetScoresResponse response;
+      try
+      {
+          response = blockingStub7.getScores(Empty.newBuilder().build());
+      }
+      catch (Exception e)
+      {
+          System.out.println("RPC failed: " + e.getMessage());
+          return;
+      }
+      // print leaderboard
+      if (response.getIsSuccess())
+      {
+          System.out.println("\n ------ Leaderboard (Top 5) ------");
+          int rank = 1;
+          for (TriviaScore score : response.getScoresList())
+          {
+              System.out.println("  " +rank+ ". " +score.getName() + " - " + score.getPercent()+ "%");
+              rank++;
+          }
+      }
+      else
+      {
+          System.out.println("No scores yet.");
+      }
+  }
+
+
+  /**
+   * Start trivia quiz for player name
+   */
+  public String startTriviaQuiz(String name)
+  {
+      StartQuizRequest request = StartQuizRequest.newBuilder().setName(name).build();
+      StartQuizResponse response;
+      try
+      {
+          response = blockingStub7.startQuiz(request);
+      }
+      catch (Exception e)
+      {
+          System.out.println("RPC failed: " + e.getMessage());
+          return null;
+      }
+      // show question and choice if started
+      if (response.getIsSuccess())
+      {
+          System.out.println("\n" +response.getQuestion());
+          for (String choice : response.getChoicesList())
+          {
+              System.out.println("  " + choice);
+          }
+          return response.getSessionId();
+      }
+      else
+      {
+          System.out.println("Error starting quiz: " + response.getError());
+          return null;
+      }
+  }
+
+
+
+  public boolean submitTriviaAnswer(String sessionId, String answer)
+  {
+      SubmitAnswerRequest request = SubmitAnswerRequest.newBuilder().setSessionId(sessionId).setAnswer(answer).build();
+      SubmitAnswerResponse response;
+      try
+      {
+          response = blockingStub7.submitAnswer(request);
+      }
+      catch (Exception e)
+      {
+          System.out.println("RPC failed: " + e.getMessage());
+          return false;
+      }
+      // show results if answer submitted
+      if (response.getIsSuccess())
+      {
+          System.out.println(response.getResultMessage());
+          if (response.getQuizComplete())
+          {
+              System.out.println("\n" +response.getFinalScore());
+              System.out.println("\n ---------- Results ----------");
+              for (String result : response.getAllResultsList())
+              {
+                  System.out.println("  " + result);
+              }
+              return false;
+          }
+          // show next question if quiz not complete
+          else
+          {
+              System.out.println("\n" +response.getNextQuestion());
+              for (String choice : response.getNextChoicesList())
+              {
+                  System.out.println("  " + choice);
+              }
+              return true;
+          }
+      }
+      else
+      {
+          System.out.println("Error submitting answer: " + response.getError());
+          return false;
+      }
+  }
+
+
+
+
+
+
   public static void main(String[] args) throws Exception {
     if (args.length != 6) {
       System.out
@@ -602,6 +772,10 @@ public class Client {
           else if (choice.equals("4"))
           {
               handleLibrary(client, reader);
+          }
+          else if (choice.equals("5"))
+          {
+              handleTrivia(client, reader);
           }
           else
           {
