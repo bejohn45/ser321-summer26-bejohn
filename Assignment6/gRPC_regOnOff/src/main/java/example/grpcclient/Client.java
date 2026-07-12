@@ -282,9 +282,226 @@ public class Client {
   }
 
 
-  public void handleLibrary(Client client, BufferedReader reader) throws Exception
+  /**
+   * Handle user input for library service
+   */
+  private static void handleLibrary(Client client, BufferedReader reader) throws Exception
   {
-    
+      // show library menu
+      System.out.println("Library options:");
+      System.out.println("1- List all books");
+      System.out.println("2- Search books");
+      System.out.println("3- Borrow a book");
+      System.out.println("4- Return a book");
+      System.out.print("Choose: ");
+      String choice = reader.readLine();
+
+      // check library choice
+      if (choice.equals("1"))
+      {
+          client.listBooks();
+      }
+      // search by title or author
+      else if (choice.equals("2"))
+      {
+          System.out.print("Enter search query (title or author): ");
+          String query = reader.readLine();
+          if (query.isEmpty())
+          {
+              System.out.println("Query cannot be empty");
+          }
+          else
+          {
+              client.searchBooks(query);
+          }
+      }
+      // borrow book
+      else if (choice.equals("3"))
+      {
+          System.out.print("Enter ISBN of the book you want to borrow: ");
+          String isbn = reader.readLine();
+          // check if isbn entered is empty
+          if (isbn.isEmpty())
+          {
+              System.out.println("ISBN cannot be empty");
+          }
+          else
+          {
+              System.out.print("Enter your name: ");
+              String name = reader.readLine().trim();
+              // check if name empty
+              if (name.isEmpty())
+              {
+                  System.out.println("Name cannot be empty");
+              }
+              else
+              {
+                  client.borrowBook(isbn, name);
+              }
+          }
+      }
+      // return book
+      else if (choice.equals("4"))
+      {
+          System.out.print("Enter ISBN of the book you want to return: ");
+          String isbn = reader.readLine().trim();
+          if (isbn.isEmpty())
+          {
+              System.out.println("ISBN cannot be empty");
+          }
+          else
+          {
+              client.returnBook(isbn);
+          }
+      }
+      // invalid choice
+      else
+      {
+          System.out.println("Invalid choice");
+      } 
+  }
+
+
+  /**
+   * List all books in library
+   */
+  public void listBooks()
+  {
+      BookListResponse response;
+      try
+      {
+          response = blockingStub6.listBooks(Empty.newBuilder().build());
+      } 
+      catch (Exception e) 
+      {
+          System.err.println("RPC failed: " + e);
+          return;
+      }
+
+      // print books
+      if (response.getIsSuccess())
+      {
+          System.out.println("\n -------- Book List --------");
+          for (Book book : response.getBooksList())
+          {
+              printBook(book);
+          }
+      }
+      else
+      {
+          System.out.println("Error listing books: " + response.getError());
+      }
+  }
+
+
+  /**
+   * Search books by title or author
+   */
+  public void searchBooks(String query)
+  {
+      BookSearchRequest request = BookSearchRequest.newBuilder().setQuery(query).build();
+      BookListResponse response;
+      try
+      {
+          response = blockingStub6.searchBooks(request);
+      } 
+      catch (Exception e) 
+      {
+          System.err.println("RPC failed: " + e);
+          return;
+      }
+
+      // print books matching
+      if (response.getIsSuccess())
+      {
+          System.out.println("\n -------- Search Results --------");
+          for (Book book : response.getBooksList())
+          {
+              printBook(book);
+          }
+      }
+      else
+      {
+          System.out.println("Error searching books: " + response.getError());
+      }
+  }
+
+
+  /**
+   * Borrow a book from the library
+   */
+  public void borrowBook(String isbn, String borrowerName)
+  {
+      BorrowRequest request = BorrowRequest.newBuilder().setIsbn(isbn).setBorrowerName(borrowerName).build();
+      BorrowResponse response;
+      try
+      {
+          response = blockingStub6.borrowBook(request);
+      } 
+      catch (Exception e) 
+      {
+          System.err.println("RPC failed: " + e);
+          return;
+      }
+
+      // print result
+      if (response.getIsSuccess())
+      {
+          System.out.println("Book borrowed successfully \n" + response.getMessage());
+      }
+      else
+      {
+          System.out.println("Error borrowing book: " + response.getError());
+      }
+  }
+
+
+  /**
+   * Return a book to the library
+   */
+  public void returnBook(String isbn)
+  {
+      ReturnRequest request = ReturnRequest.newBuilder().setIsbn(isbn).build();
+      ReturnResponse response;
+      try
+      {
+          response = blockingStub6.returnBook(request);
+      } 
+      catch (Exception e) 
+      {
+          System.err.println("RPC failed: " + e);
+          return;
+      }
+
+      // print result
+      if (response.getIsSuccess())
+      {
+          System.out.println("Book returned successfully \n" + response.getMessage());
+      }
+      else
+      {
+          System.out.println("Error returning book: " + response.getError());
+      }
+  }
+
+
+  /*
+   * Print book info
+   */
+  private static void printBook(Book book)
+  {
+      System.out.println("  Title:  " + book.getTitle());
+      System.out.println("  Author: " + book.getAuthor());
+      System.out.println("  ISBN:   " + book.getIsbn());
+      if (book.getIsBorrowed())
+      {
+          System.out.println("  Book is borrowed by: " +book.getBorrowedBy()+ " (due " +book.getReturnBy()+ ")");
+      }
+      else
+      {
+          System.out.println("  Book is available");
+      }
+      System.out.println("--------------------");
   }
 
 
