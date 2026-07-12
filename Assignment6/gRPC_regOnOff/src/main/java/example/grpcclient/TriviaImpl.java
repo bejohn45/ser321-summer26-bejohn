@@ -209,7 +209,7 @@ class TriviaImpl extends TriviaGrpc.TriviaImplBase
                     for (int i=0; i < TOTAL_QUESTIONS; i++)
                     {
                         String grade = session.results.get(i) ? "CORRECT" : "WRONG: answer is " +session.questions.get(i).correctAnswer;
-                        response.addAllResults("Q" +(i+1)+ ": " +session.questions.get(i)+ session.userAnswers.get(i)+ "    " +grade);
+                        response.addAllResults("Q" +(i+1)+ ": " +session.questions.get(i).question+ " - you answered " +session.userAnswers.get(i)+ "    " +grade);
                     }
 
                     // update leaderboard if top 5
@@ -227,6 +227,15 @@ class TriviaImpl extends TriviaGrpc.TriviaImplBase
         SubmitAnswerResponse r = response.build();
         responseObserver.onNext(r);
         responseObserver.onCompleted();
+    }
+
+
+    /**
+     * Check if valid multiple choice answer
+     */
+    private boolean isValidAnswer(String answer)
+    {
+        return ((answer.equals("A")) || (answer.equals("B")) || (answer.equals("C")) || (answer.equals("D")));
     }
 
 
@@ -285,7 +294,7 @@ class TriviaImpl extends TriviaGrpc.TriviaImplBase
     /**
      * Choose 10 random questions from question bank
      */
-    private ArrayList<QuizQuestion> chooseRandomQuesions()
+    private ArrayList<QuizQuestion> chooseRandomQuestions()
     {
         ArrayList<QuizQuestion> shuffled = new ArrayList<>(questionBank);
         Collections.shuffle(shuffled);
@@ -296,9 +305,9 @@ class TriviaImpl extends TriviaGrpc.TriviaImplBase
     /**
      * Format question to show "Question x/10: ___ + ___ = "
      */
-    private String formatQuestion(int index, QuizSession session)
+    private String formatQuestion(int index, QuizQuestion question)
     {
-        return "Question " +(index + 1)+ "/" +TOTAL_QUESTIONS+ ": " +session.questions.get(index);
+        return "Question " +(index + 1)+ "/" +TOTAL_QUESTIONS+ ": " +question.question;
     }
 
 
