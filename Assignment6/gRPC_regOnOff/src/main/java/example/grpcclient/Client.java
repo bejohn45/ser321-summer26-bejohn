@@ -20,6 +20,7 @@ public class Client {
   private final RegistryGrpc.RegistryBlockingStub blockingStub3;
   private final RegistryGrpc.RegistryBlockingStub blockingStub4;
   private final ConverterGrpc.ConverterBlockingStub blockingStub5;
+  private final LibraryGrpc.LibraryBlockingStub blockingStub6;
 
   /** Construct client for accessing server using the existing channel. */
   public Client(Channel channel, Channel regChannel) {
@@ -34,6 +35,7 @@ public class Client {
     blockingStub3 = RegistryGrpc.newBlockingStub(regChannel);
     blockingStub4 = RegistryGrpc.newBlockingStub(channel);
     blockingStub5 = ConverterGrpc.newBlockingStub(channel);
+    blockingStub6 = LibraryGrpc.newBlockingStub(channel);
   }
 
   /** Construct client for accessing server using the existing channel. */
@@ -49,6 +51,7 @@ public class Client {
     blockingStub3 = null;
     blockingStub4 = null;
     blockingStub5 = null;
+    blockingStub6 = LibraryGrpc.newBlockingStub(channel);
   }
 
   public void askServerToParrot(String message) {
@@ -154,6 +157,7 @@ public class Client {
       System.out.println("1- Echo");
       System.out.println("2- Joke");
       System.out.println("3- Converter");
+      System.out.println("4- Library");
       System.out.println("0- Exit");
       System.out.println("Choose a service (enter number): ");
   }
@@ -278,6 +282,12 @@ public class Client {
   }
 
 
+  public void handleLibrary(Client client, BufferedReader reader) throws Exception
+  {
+    
+  }
+
+
 
   public static void main(String[] args) throws Exception {
     if (args.length != 6) {
@@ -371,6 +381,10 @@ public class Client {
           else if (choice.equals("3"))
           {
               handleConverter(client, reader);
+          }
+          else if (choice.equals("4"))
+          {
+              handleLibrary(client, reader);
           }
           else
           {
