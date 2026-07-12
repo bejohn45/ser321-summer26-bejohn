@@ -175,6 +175,22 @@ task runNode(type: JavaExec) {
   args regOn
 }
 
+tasks.register('serverTest', Test)
+{
+    description = 'Runs the ServerTest class with gradle runNode running first'
+    group = 'verification'
+    filter
+    {
+        includeTestsMatching 'ServerTest'
+    }
+    // show results
+    testLogging
+    {
+        events "passed", "failed", "skipped"
+        showStandardStreams = true
+    }
+}
+
 
 // How I ran it:
 // ser321test.duckdns.org is my IP on the first AWS instance
