@@ -1,0 +1,91 @@
+// This service provides a trivia quiz with 10 multiple choice questions loaded from a JSON question bank questions.json
+// The server must maintain session state to track questions and scores
+//
+// QUIZ FLOW:
+// 1. Client calls startQuiz with their name and gets a session_id assigned and first question with answer choices
+// 2. Client submits answer (A, B, C, or D) with same session_id for each question
+// 3. After 10 questions, final score shows
+// 4. If the score is in the top 5, it gets saved to trivia_leaderboard.json
+//
+// QUESTION SELECTION:
+// - 10 random questions are picked from the loaded question bank
+//
+//
+// IMPORTANT: Make sure to validate all inputs before processing
+
+// some error messages to use in the servers responses:
+// name is required - for starting quiz with empty name
+// session not found - for submit with invalid session_id
+// session_id is required - for submit with empty session_id
+// quiz already completed - for submit on finished session
+// invalid answer - answer submitted is not A, B, C, or D
+// no scores yet - no quizes completed
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "service";
+option java_outer_classname = "TriviaProto";
+
+import "google/protobuf/empty.proto";
+
+package services;
+
+service Trivia
+{
+  rpc startQuiz (StartQuizRequest) returns (StartQuizResponse) {}
+  rpc submitAnswer (SubmitAnswerRequest) returns (SubmitAnswerResponse) {}
+  rpc getScores (google.protobuf.Empty) returns (GetScoresResponse) {}
+}
+
+
+// request to start quiz
+message StartQuizRequest
+{
+    string name = 1;    // name of player 
+}
+
+// response for starting quiz
+message StartQuizResponse
+{
+    bool isSuccess = 1;
+    string session_id = 2;      // unique session id for quiz
+    string question = 3;        // first question
+    repeated string choices = 4;    // multiple choices for question
+    string error = 5;           // error message if isSuccess is false
+}
+
+// request to submit answer
+message SubmitAnswerRequest
+{
+    string session_id = 1;
+    string answer = 2;  // A, B, C, or D
+}
+
+// response after submitting answer
+message SubmitAnswerResponse
+{
+    bool isSuccess = 1;
+    bool correct = 2;                       // if answer correct
+    string result_message = 3;              // output if correct and answer
+    string next_question = 4;               // next question (empty if complete)
+    repeated string next_choices = 5;       // multiple choices for next question (empty if complete)
+    bool quiz_complete = 6;                 // true if last question    
+    string final_score = 7;                 // output score
+    repeated string all_results = 8;        // list of results for each question when quiz complete
+    string error = 9;                       // error if isSuccess is false
+}
+
+// quiz score record
+message TriviaScore
+{
+    string name = 1;             // name of player
+    int32 percent = 2;              // percent score
+}
+
+// response for getting scores
+message GetScoresResponse
+{
+    bool isSuccess = 1;
+    repeated TriviaScore scores = 2;      // list of completed trivia scores
+    string error = 3;                   // error if isSuccess is false
+}
